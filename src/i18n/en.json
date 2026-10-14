@@ -205,7 +205,7 @@
     "problem": {
       "rateLimit": "Too many links asked for in a short time. Wait a few minutes and try again: the previous email still works.",
       "invalidEmail": "That email does not look valid. Check it and try again.",
-      "offline": "No connection. Check your data or wifi and try again.",
+      "offline": "The server could not be reached. It may be your connection, a browser blocker, or the server not answering.",
       "unknown": "The link could not be sent."
     },
     "bodyPassword": "Sign in with your email and password.",

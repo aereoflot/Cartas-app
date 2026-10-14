@@ -205,7 +205,7 @@
     "problem": {
       "rateLimit": "Has pedido demasiados enlaces en poco tiempo. Espera unos minutos y vuelve a intentarlo: el correo anterior sigue siendo válido.",
       "invalidEmail": "Ese correo no parece válido. Revísalo y vuelve a intentarlo.",
-      "offline": "No hay conexión. Comprueba tus datos o el wifi y vuelve a intentarlo.",
+      "offline": "No se ha podido contactar con el servidor. Puede ser tu conexión, un bloqueador del navegador, o que el servidor no esté respondiendo.",
       "unknown": "No se ha podido enviar el enlace."
     },
     "bodyPassword": "Entra con tu correo y tu contraseña.",
