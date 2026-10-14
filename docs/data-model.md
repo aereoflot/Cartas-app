@@ -1,0 +1,641 @@
+# Cartas — Data Model
+
+Target: Postgres 15 on Supabase, with Row Level Security on every table. This file is the source
+for the first migration (`supabase/migrations/0001_init.sql` in M1). It is deliberately written as
+runnable SQL rather than prose so M1 is a copy, not a translation.
+
+## Shape at a glance
+
+```
+auth.users ──1:1── profiles ──┬── user_decks ──── decks ──self──> decks (parent, for variants)
+                              │                     ▲
+                              ├── game_favorites    │
+                              ├── deck_favorites    │ game_decks (quantity, cards_removed)
+                              ├── game_ratings      │
+                              ├── game_comments     │
+                              ├── friendships (self-join on profiles)
+                              ├── game_shares
+                              ├── matches ──────> games        (one played session, offline-first)
+                              ├── game_reviews ─> games        (approve / reject log)
+                              └── games ──1:N── game_texts (one row per locale)
+                                    └─self──> games (fork_of_id, for variants)
+```
+
+Two decisions drive everything else:
+
+1. **Specification and content are separate tables.** `games` holds filterable, language-neutral
+   facts; `game_texts` holds per-locale title and rules. Filters never touch translated text, and a
+   translation never forks a game.
+2. **Decks are structured data, not a label.** Suits and ranks are stored, so the app can render a
+   deck, compute its size, and compare a game's needs against what a user owns.
+
+## Enums
+
+```sql
+create type deck_kind            as enum ('standard', 'variant', 'custom');
+create type visibility           as enum ('public', 'friends', 'private');
+create type game_status          as enum ('draft', 'pending_review', 'published',
+                                          'rejected', 'archived');
+create type profile_role         as enum ('user', 'moderator', 'owner');
+create type review_decision      as enum ('approved', 'rejected');
+create type missing_cards_policy as enum ('strict', 'tolerant', 'irrelevant');
+create type friendship_status    as enum ('pending', 'accepted', 'blocked');
+create type report_status        as enum ('open', 'reviewing', 'resolved', 'dismissed');
+```
+
+## Profiles
+
+```sql
+create extension if not exists citext;
+
+create table profiles (
+  id           uuid primary key references auth.users (id) on delete cascade,
+  username     citext not null unique check (username ~ '^[a-z0-9_]{3,24}$'),
+  display_name text   not null check (char_length(display_name) between 1 and 60),
+  avatar_url   text,
+  bio          text   check (char_length(bio) <= 400),
+  locale       text   not null default 'es' check (locale in ('es', 'en')),
+  role         profile_role not null default 'user',
+  hide_adult   boolean not null default false,   -- "hide 18+ games" setting
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+-- exactly one owner account
+create unique index profiles_single_owner_idx on profiles ((role)) where role = 'owner';
+```
+
+## Decks
+
+`suits`, `ranks` and `extras` are JSONB arrays. They are small, always read whole, and their shape
+is owned by the client — exactly the case JSONB is for. Validated in the app with Zod and guarded
+here by shape checks.
+
+```sql
+create table decks (
+  id             uuid primary key default gen_random_uuid(),
+  slug           text not null unique check (slug ~ '^[a-z0-9-]{3,60}$'),
+  name           text not null,
+  name_i18n      jsonb not null default '{}'::jsonb,   -- {"en": "Spanish 40-card"}
+  description    text,
+  kind           deck_kind not null,
+  parent_deck_id uuid references decks (id) on delete set null,
+  author_id      uuid references profiles (id) on delete set null,  -- null for seeded standards
+  visibility     visibility not null default 'public',
+
+  -- [{"key":"oros","name":"Oros","symbol":"🪙","color":"gold"}, ...]
+  suits          jsonb not null default '[]'::jsonb check (jsonb_typeof(suits)  = 'array'),
+  -- [{"key":"1","label":"As","value":1,"order":1,"copies":1}, ...]
+  -- "copies" defaults to 1; an Uno-style deck has two of each number per colour
+  ranks          jsonb not null default '[]'::jsonb check (jsonb_typeof(ranks)  = 'array'),
+  -- cards belonging to no suit: [{"key":"comodin","label":"Comodín","count":2}, ...]
+  extras         jsonb not null default '[]'::jsonb check (jsonb_typeof(extras) = 'array'),
+  card_count     int  not null check (card_count between 1 and 500),
+
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+  constraint variant_has_parent check (kind <> 'variant' or parent_deck_id is not null)
+);
+
+create index decks_parent_idx on decks (parent_deck_id);
+create index decks_author_idx on decks (author_id);
+```
+
+Seeded standard decks, in `0002_standard_decks.sql` — generated by `supabase/gen_decks.py` so
+`card_count` is computed (suits × ranks(copies) + extras) rather than typed:
+
+| slug | cards | notes |
+|---|---|---|
+| `espanola-40` | 40 | as–7 plus sota, caballo, rey. Mus, tute, brisca, guiñote |
+| `espanola-48` | 48 | with the 8s and 9s |
+| `francesa-52` | 52 | poker cards, no jokers |
+| `francesa-54` | 54 | variant of `francesa-52` + 2 jokers |
+| `francesa-32` | 32 | variant of `francesa-52`, 7–ace. Belote |
+| `alemana-32` | 32 | acorns, leaves, hearts, bells. Skat, schafkopf |
+| `tarot-78` | 78 | 4 × 14 + 22 major arcana (as `extras`) |
+| `uno-108` | 108 | 4 colours × 25 + 8 wilds; uses `copies` on ranks |
+
+`francesa-54` and `francesa-32` are seeded as `variant` rows pointing at `francesa-52`, which
+exercises the parent mechanism that user-built decks use.
+
+### What a user physically owns
+
+```sql
+create table user_decks (
+  profile_id    uuid not null references profiles (id) on delete cascade,
+  deck_id       uuid not null references decks (id) on delete cascade,
+  copies        int  not null default 1 check (copies between 1 and 20),
+  -- ["oros-3","copas-rey"] — card keys known to be lost
+  missing_cards jsonb not null default '[]'::jsonb check (jsonb_typeof(missing_cards) = 'array'),
+  note          text,
+  created_at    timestamptz not null default now(),
+  primary key (profile_id, deck_id)
+);
+```
+
+## Games
+
+```sql
+create table games (
+  id                   uuid primary key default gen_random_uuid(),
+  slug                 text not null unique check (slug ~ '^[a-z0-9-]{3,80}$'),
+  author_id            uuid references profiles (id) on delete set null,
+  fork_of_id           uuid references games (id) on delete set null,
+  status               game_status not null default 'draft',
+  visibility           visibility  not null default 'public',
+  listed               boolean     not null default true,   -- false = reachable by link only
+  primary_locale       text not null default 'es' check (primary_locale in ('es', 'en')),
+
+  players_min          int not null check (players_min between 1 and 64),
+  players_max          int not null check (players_max between 1 and 64),
+  players_best         int check (players_best between 1 and 64),
+  supports_teams       boolean not null default false,
+  team_size            int check (team_size between 2 and 8),
+
+  deck_count_total     int not null default 0,   -- maintained by trigger from game_decks
+  missing_cards_policy missing_cards_policy not null default 'strict',
+  missing_cards_note   text,
+
+  duration_min         int check (duration_min between 1 and 1440),
+  duration_max         int check (duration_max between 1 and 1440),
+  complexity           smallint check (complexity between 1 and 5),
+  age_min              smallint check (age_min between 3 and 21),
+
+  requires_extras      text[] not null default '{}',  -- chips, paper, timer, coin, big-table
+  mechanics            text[] not null default '{}',  -- trick-taking, shedding, betting, ...
+  adult_only           boolean not null default false, -- drinking / betting games
+
+  rating_avg           numeric(3,2) not null default 0,
+  rating_count         int  not null default 0,
+  favorite_count       int  not null default 0,
+
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now(),
+  submitted_at         timestamptz,   -- entered pending_review
+  reviewed_at          timestamptz,
+  reviewed_by          uuid references profiles (id) on delete set null,
+  published_at         timestamptz,
+
+  constraint player_range  check (players_max >= players_min),
+  constraint duration_range check (duration_max is null or duration_min is null
+                                   or duration_max >= duration_min),
+  constraint teams_need_size check (not supports_teams or team_size is not null)
+);
+
+create index games_players_idx    on games (players_min, players_max);
+create index games_mechanics_idx  on games using gin (mechanics);
+create index games_extras_idx     on games using gin (requires_extras);
+create index games_browse_idx     on games (status, visibility, listed, published_at desc);
+create index games_queue_idx      on games (submitted_at) where status = 'pending_review';
+create index games_author_idx     on games (author_id);
+create index games_fork_idx       on games (fork_of_id);
+```
+
+### Which decks a game needs
+
+```sql
+create table game_decks (
+  game_id       uuid not null references games (id) on delete cascade,
+  deck_id       uuid not null references decks (id) on delete restrict,
+  quantity      int  not null default 1 check (quantity between 1 and 20),
+  -- cards to take out before play: ["8","9"] or ["oros-8","copas-8", ...]
+  cards_removed jsonb not null default '[]'::jsonb check (jsonb_typeof(cards_removed) = 'array'),
+  note          text,
+  primary key (game_id, deck_id)
+);
+
+create index game_decks_deck_idx on game_decks (deck_id);
+```
+
+> **v1 limitation, deliberate:** deck requirements match by exact `deck_id`. Playing a 52-card game
+> with a 54-card deck minus jokers is obvious to a human but needs a compatibility graph
+> (`deck_a` ⊇ `deck_b`) to compute. Deferred to v2; `cards_removed` plus a human-readable note
+> covers it in the meantime.
+
+### Localised content
+
+```sql
+create table game_texts (
+  game_id              uuid not null references games (id) on delete cascade,
+  locale               text not null check (locale in ('es', 'en')),
+  title                text not null check (char_length(title) between 2 and 120),
+  tagline              text check (char_length(tagline) <= 160),
+  summary              text not null check (char_length(summary) between 10 and 600),
+  -- [{"heading":"Objetivo","body":"..."}, ...] — ordered, restricted Markdown in body
+  sections             jsonb not null default '[]'::jsonb
+                         check (jsonb_typeof(sections) = 'array'),
+  translator_id        uuid references profiles (id) on delete set null,
+  is_machine_translated boolean not null default false,
+  updated_at           timestamptz not null default now(),
+  search               tsvector generated always as (
+                         to_tsvector(
+                           case locale when 'es' then 'spanish'::regconfig
+                                       else 'english'::regconfig end,
+                           coalesce(title, '') || ' ' || coalesce(tagline, '') || ' ' ||
+                           coalesce(summary, '')
+                         )
+                       ) stored,
+  primary key (game_id, locale)
+);
+
+create index game_texts_search_idx on game_texts using gin (search);
+```
+
+## Social
+
+```sql
+create table friendships (
+  id           uuid primary key default gen_random_uuid(),
+  requester_id uuid not null references profiles (id) on delete cascade,
+  addressee_id uuid not null references profiles (id) on delete cascade,
+  status       friendship_status not null default 'pending',
+  created_at   timestamptz not null default now(),
+  responded_at timestamptz,
+  constraint no_self_friendship check (requester_id <> addressee_id)
+);
+
+-- one relationship per pair, in either direction
+create unique index friendships_pair_idx on friendships (
+  least(requester_id, addressee_id), greatest(requester_id, addressee_id)
+);
+
+create table game_shares (
+  id              uuid primary key default gen_random_uuid(),
+  from_profile_id uuid not null references profiles (id) on delete cascade,
+  to_profile_id   uuid not null references profiles (id) on delete cascade,
+  game_id         uuid not null references games (id) on delete cascade,
+  message         text check (char_length(message) <= 300),
+  created_at      timestamptz not null default now(),
+  read_at         timestamptz
+);
+
+create index game_shares_inbox_idx on game_shares (to_profile_id, read_at, created_at desc);
+
+create table game_favorites (
+  profile_id uuid not null references profiles (id) on delete cascade,
+  game_id    uuid not null references games (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (profile_id, game_id)
+);
+
+create table deck_favorites (
+  profile_id uuid not null references profiles (id) on delete cascade,
+  deck_id    uuid not null references decks (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (profile_id, deck_id)
+);
+
+create table game_ratings (
+  profile_id uuid not null references profiles (id) on delete cascade,
+  game_id    uuid not null references games (id) on delete cascade,
+  stars      smallint not null check (stars between 1 and 5),
+  created_at timestamptz not null default now(),
+  primary key (profile_id, game_id)
+);
+
+create table game_comments (
+  id         uuid primary key default gen_random_uuid(),
+  game_id    uuid not null references games (id) on delete cascade,
+  author_id  uuid not null references profiles (id) on delete cascade,
+  parent_id  uuid references game_comments (id) on delete cascade,
+  body       text not null check (char_length(body) between 1 and 2000),
+  created_at timestamptz not null default now(),
+  deleted_at timestamptz
+);
+
+create index game_comments_game_idx on game_comments (game_id, created_at);
+
+create table content_reports (
+  id           uuid primary key default gen_random_uuid(),
+  reporter_id  uuid references profiles (id) on delete set null,
+  target_type  text not null check (target_type in ('game', 'deck', 'comment', 'profile')),
+  target_id    uuid not null,
+  reason       text not null check (reason in
+                 ('spam', 'copyright', 'inappropriate', 'wrong-rules', 'other')),
+  detail       text check (char_length(detail) <= 1000),
+  status       report_status not null default 'open',
+  created_at   timestamptz not null default now()
+);
+```
+
+## Review
+
+Every game is approved by the owner before it becomes public (product spec §3.8). `games.status`
+carries the state; this table is the audit log, so an author is never told two different things and
+the queue keeps its history.
+
+```sql
+create table game_reviews (
+  id          uuid primary key default gen_random_uuid(),
+  game_id     uuid not null references games (id) on delete cascade,
+  reviewer_id uuid references profiles (id) on delete set null,
+  decision    review_decision not null,
+  reason      text check (char_length(reason) <= 1000),
+  via         text not null default 'app' check (via in ('app', 'email')),
+  created_at  timestamptz not null default now(),
+  constraint rejection_needs_reason
+    check (decision <> 'rejected' or (reason is not null and char_length(reason) > 0))
+);
+
+create index game_reviews_game_idx on game_reviews (game_id, created_at desc);
+```
+
+**Email approval tokens are not stored.** The `review-notify` function signs
+`game_id · decision · submitted_at · expiry` with an HMAC secret held only by the edge functions,
+and `review-action` recomputes it. Including `submitted_at` in the payload makes a token
+self-invalidating: the moment a game is approved, rejected or resubmitted, `submitted_at` changes
+or the status moves, and every old link stops verifying. Nothing to clean up, no table to leak.
+
+## Matches
+
+One played session, started from a game page (product spec §2.4, §3.7). Offline-first: the client
+owns the row, writes it to local storage immediately, and upserts when it has a connection — so
+`id` is generated client-side and `updated_at` is the conflict tiebreaker.
+
+```sql
+create table matches (
+  id           uuid primary key,                -- client-generated, offline-first
+  profile_id   uuid not null references profiles (id) on delete cascade,
+  game_id      uuid not null references games (id) on delete restrict,
+  player_count int not null check (player_count between 1 and 64),
+  -- which decks were actually used; free-form so an improvised deck still records
+  deck_ids     uuid[] not null default '{}',
+  -- optional player names, in seating order: ["Ana","Luis","Me"]
+  player_names jsonb not null default '[]'::jsonb
+                 check (jsonb_typeof(player_names) = 'array'),
+  notes        text,                            -- the scratchpad, autosaved
+  -- calculator tape: [{"label":"Ana","value":-23},{"label":"Luis","value":7}]
+  tally        jsonb not null default '[]'::jsonb check (jsonb_typeof(tally) = 'array'),
+  started_at   timestamptz not null default now(),
+  ended_at     timestamptz,                     -- null = unfinished / abandoned
+  updated_at   timestamptz not null default now(),
+  constraint match_time_order check (ended_at is null or ended_at >= started_at)
+);
+
+create index matches_history_idx on matches (profile_id, started_at desc);
+create index matches_game_idx    on matches (game_id);
+```
+
+The match timer and the round timer are **not** stored as running state — the match timer is
+`now() - started_at`, and the round timer is ephemeral client state that nobody needs after the
+round. Storing a ticking value would mean writing every second for no gain.
+
+`matches` is also the play-history signal the AI *suggest* mode reads: how many players the user
+usually has, which games they return to, how long their sessions really run versus the game's
+declared duration.
+
+## Folders, groups and the group chat
+
+Added in `0005_folders_and_groups.sql`. All three features already work in the app against local
+storage — which is what lets them work with no account at all — and these tables are where they
+land once there is an account to hang them on.
+
+```sql
+deck_folders          (profile_id, name, position)        -- unique per person
+deck_folder_decks     (folder_id, deck_id, position)
+friend_groups         (owner_id, name)
+friend_group_members  (group_id, profile_id | display_name)
+group_messages        (group_id, author_id, body)
+matches.group_id      -- which group a match was played with
+```
+
+**The decision worth knowing** is in `friend_group_members`: a member is **either** a real account
+**or** a plain name, never both and never neither, enforced by a check constraint.
+
+```sql
+constraint member_is_an_account_or_a_name check (
+  (profile_id is not null and display_name is null)
+  or (profile_id is null and display_name is not null)
+)
+```
+
+Names are what the app can offer today, with no sign-in. Accounts are what makes the group chat
+reach anybody. Writing the transition into the constraint keeps a text column from rotting next to
+a user id, and the app says the same thing in words on the group form.
+
+`matches.group_id` turns "our last matches" into a real query (`matches_for_group`) instead of
+guesswork over the player names somebody typed that evening — which is how the app does it while
+everything is still local.
+
+Two partial unique indexes stop the same person joining twice, by account or by name
+(case-insensitively). `group_messages` has `update` revoked from `authenticated`: a message is a
+record of what was said, and nobody gets to rewrite it.
+
+## AI sessions
+
+Kept so a user can return to an explanation, and so cost can be attributed and capped per user.
+
+```sql
+create table ai_threads (
+  id         uuid primary key default gen_random_uuid(),
+  profile_id uuid not null references profiles (id) on delete cascade,
+  game_id    uuid references games (id) on delete set null,
+  mode       text not null check (mode in ('explain', 'referee', 'suggest', 'author')),
+  title      text,
+  created_at timestamptz not null default now()
+);
+
+create table ai_messages (
+  id            uuid primary key default gen_random_uuid(),
+  thread_id     uuid not null references ai_threads (id) on delete cascade,
+  role          text not null check (role in ('user', 'assistant')),
+  content       text not null,
+  model         text,
+  input_tokens  int,
+  output_tokens int,
+  created_at    timestamptz not null default now()
+);
+
+create index ai_messages_thread_idx on ai_messages (thread_id, created_at);
+```
+
+## Derived data (triggers)
+
+```sql
+create or replace function touch_updated_at() returns trigger
+language plpgsql as $$
+begin
+  new.updated_at := now();
+  return new;
+end $$;
+
+create trigger profiles_touch   before update on profiles   for each row execute function touch_updated_at();
+create trigger decks_touch      before update on decks      for each row execute function touch_updated_at();
+create trigger games_touch      before update on games      for each row execute function touch_updated_at();
+create trigger game_texts_touch before update on game_texts for each row execute function touch_updated_at();
+
+-- deck_count_total = sum of required copies
+create or replace function sync_deck_count() returns trigger
+language plpgsql as $$
+declare target uuid := coalesce(new.game_id, old.game_id);
+begin
+  update games g
+     set deck_count_total = coalesce(
+           (select sum(quantity) from game_decks where game_id = target), 0)
+   where g.id = target;
+  return null;
+end $$;
+
+create trigger game_decks_count after insert or update or delete on game_decks
+  for each row execute function sync_deck_count();
+
+-- rating_avg / rating_count
+create or replace function sync_rating() returns trigger
+language plpgsql as $$
+declare target uuid := coalesce(new.game_id, old.game_id);
+begin
+  update games g
+     set rating_avg   = coalesce((select round(avg(stars), 2) from game_ratings where game_id = target), 0),
+         rating_count = (select count(*) from game_ratings where game_id = target)
+   where g.id = target;
+  return null;
+end $$;
+
+create trigger game_ratings_sync after insert or update or delete on game_ratings
+  for each row execute function sync_rating();
+
+-- favorite_count
+create or replace function sync_favorite_count() returns trigger
+language plpgsql as $$
+declare target uuid := coalesce(new.game_id, old.game_id);
+begin
+  update games g
+     set favorite_count = (select count(*) from game_favorites where game_id = target)
+   where g.id = target;
+  return null;
+end $$;
+
+create trigger game_favorites_sync after insert or delete on game_favorites
+  for each row execute function sync_favorite_count();
+```
+
+## Access rules
+
+Two security-definer helpers keep the policies short and avoid recursive RLS evaluation.
+
+```sql
+create or replace function are_friends(a uuid, b uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from friendships f
+     where f.status = 'accepted'
+       and ((f.requester_id = a and f.addressee_id = b)
+         or (f.requester_id = b and f.addressee_id = a))
+  );
+$$;
+
+create or replace function is_reviewer() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from profiles p
+     where p.id = auth.uid() and p.role in ('owner', 'moderator')
+  );
+$$;
+
+create or replace function can_view_game(g uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from games x
+     where x.id = g
+       and ( x.author_id = auth.uid()
+          or is_reviewer()
+          or (x.status = 'published' and x.visibility = 'public')
+          or (x.status = 'published' and x.visibility = 'friends'
+              and are_friends(auth.uid(), x.author_id)) )
+  );
+$$;
+
+alter table profiles        enable row level security;
+alter table decks           enable row level security;
+alter table user_decks      enable row level security;
+alter table games           enable row level security;
+alter table game_decks      enable row level security;
+alter table game_texts      enable row level security;
+alter table friendships     enable row level security;
+alter table game_shares     enable row level security;
+alter table game_favorites  enable row level security;
+alter table deck_favorites  enable row level security;
+alter table game_ratings    enable row level security;
+alter table game_comments   enable row level security;
+alter table content_reports enable row level security;
+alter table game_reviews    enable row level security;
+alter table matches         enable row level security;
+alter table ai_threads      enable row level security;
+alter table ai_messages     enable row level security;
+```
+
+Policy set, stated in words — each line becomes one `create policy` in the migration:
+
+| Table | Read | Write |
+|---|---|---|
+| `profiles` | anyone (public profiles) | own row only |
+| `decks` | public decks, own decks, friends' `friends`-visible decks | author; seeded standards are author-less and read-only |
+| `user_decks` | own rows, and friends' rows (so "what can *we* play" works) | own rows |
+| `games` | published + public; own drafts/pending/rejected; friends' `friends`-visible; reviewers see everything | author may write only rows whose **new** status is `draft` or `pending_review`; `published` / `rejected` only by a reviewer |
+| `game_reviews` | the game's author (to read the rejection reason) and reviewers | reviewers only |
+| `matches` | own rows | own rows (insert, update, delete) |
+| `game_decks`, `game_texts` | `can_view_game(game_id)` | game's author; `game_texts` also writable by any signed-in user adding a *new* locale |
+| `friendships` | rows where you are either side | insert as requester; update status only as addressee |
+| `game_shares` | sender or recipient | insert if sender = you **and** `are_friends`; recipient may set `read_at` |
+| `game_favorites`, `deck_favorites`, `game_ratings` | own rows (counts come from the denormalised columns) | own rows |
+| `game_comments` | `can_view_game(game_id)` and `deleted_at is null` | author inserts; author soft-deletes |
+| `content_reports` | reporter sees own; admins see all | any signed-in user inserts |
+| `ai_threads`, `ai_messages` | own rows | own rows; assistant rows written by the edge function with the service role |
+
+### Two consequences worth knowing
+
+**Editing a published game sends it back for review.** The author's update policy checks the *new*
+row, and only allows `draft` or `pending_review`. So an author cannot change a live game in place:
+the update has to set `status = 'pending_review'` in the same statement, and the game leaves the
+public catalogue until it is approved again. That is the correct trade for a reviewed platform, and
+the editor must say so plainly before saving. Versioning a game — keeping the approved copy public
+while an edit waits — is the v2 fix.
+
+**Counter triggers must be `security definer`.** `sync_rating`, `sync_favorite_count` and
+`sync_deck_count` read every user's rows and write a `games` row the current user does not own.
+Run as the caller, RLS hides the rows and silently blocks the write, and every counter stays at
+zero with no error anywhere. The schema tests catch this; see `supabase/tests/README.md`.
+
+## "What can we play right now", and why it is not SQL
+
+The question the schema exists for: given the decks somebody owns, which games can they play
+tonight? There *was* a `games_playable_for` function for it, and `0008` drops it.
+
+It is answered on the device instead (`src/features/search/GameSearch.tsx`), from the deck
+inventory the app already holds, because that is where the question gets asked: at a table, often
+with no signal. A round trip to answer it would fail exactly when it is needed. The function had no
+caller, and a tested, documented function with no caller is still dead code.
+
+What stays in the database is the *data* the answer needs: `user_decks` (which decks a person owns)
+and `games.missing_cards_policy` (whether a missing card ruins it). The schema tests cover those;
+the filtering is covered by the app tests.
+
+## Storage buckets## Storage buckets
+
+| Bucket | Contents | Access |
+|---|---|---|
+| `avatars` | profile pictures | public read, owner write, 1 MB cap |
+| `game-media` | game cover images, diagrams | public read, game author write, 3 MB cap |
+| `deck-art` | custom card art for invented decks | public read, deck author write |
+
+## Edge functions
+
+| Function | Purpose |
+|---|---|
+| `ai-expert` | The four AI modes (§3.6 of the product spec). Holds the Anthropic key, enforces per-user rate limits and token budgets, streams SSE. |
+| `review-notify` | On submit, emails the owner the game's spec and rules plus signed one-click Approve / Reject links. Holds the HMAC secret. |
+| `review-action` | Verifies an email token and applies the decision: flips `games.status`, stamps `reviewed_at`/`reviewed_by`, writes `game_reviews`. Rejection collects a reason on its landing page. |
+| `slugify` | Generates unique slugs for new games and decks. |
+| `report-notify` | Pushes new `content_reports` to a moderation channel. |
+
+## Two notes from the final review
+
+**`matches.updated_at` is the device's, not a trigger's** (`0007`). Matches are written offline and
+synced later, so the client is the only thing that knows when one really changed. The generic
+`touch_updated_at` trigger overwrote it with `now()` on every upsert, which made the server copy
+always look newer and would have let a stale phone win every conflict.
+
+**A content preference is not a public fact** (`0008`). `profiles` is world-readable on purpose — a
+byline and a searchable handle have to be — but `hide_adult` sat in that same row, so anyone could
+read whether a given person hides adult games. It moved to `profile_settings`, which only its owner
+can read or write, and it is wired up now: a setting that does nothing is worse than no setting.

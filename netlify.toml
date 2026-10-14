@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Every route is drawn by the app, not by the server: without this, reloading
+# /decks or opening a shared /search?players=4 link would 404.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,0 +1,427 @@
+{
+  "app": {
+    "name": "Cartas",
+    "tagline": "Rules, decks and matches"
+  },
+  "nav": {
+    "home": "Home",
+    "search": "Search",
+    "decks": "Decks",
+    "friends": "Friends",
+    "profile": "Profile",
+    "expert": "Expert"
+  },
+  "common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "any": "any",
+    "players": "players",
+    "player": "player",
+    "minutes": "min",
+    "decks": "decks",
+    "deck": "deck",
+    "soon": "Not built yet",
+    "soonBody": "This part arrives in a later milestone. The plan is in docs/product-spec.md.",
+    "theme": "Theme",
+    "sampleData": "Sample data",
+    "sampleDataBody": "No Supabase configured, so this is an example catalogue. Copy .env.example to .env.local to connect it.",
+    "loading": "Loading…",
+    "loadFailed": "The catalogue could not be loaded."
+  },
+  "home": {
+    "resume": "Resume match",
+    "resumeSince": "started {{time}} ago",
+    "favorites": "Favorite games",
+    "favoritesEmpty": "Your favorite games will show up here. Tap the star on any game.",
+    "favDecks": "Favorite decks",
+    "playNow": "Play now",
+    "favDecksEmpty": "Your favorite decks will show up here. Tap the star on any deck."
+  },
+  "search": {
+    "title": "Search games",
+    "placeholder": "Search by name…",
+    "filters": "Filters",
+    "players": "Players",
+    "deckCount": "Decks needed",
+    "deckType": "Deck type",
+    "duration": "Duration",
+    "complexity": "Complexity",
+    "mineOnly": "Only with decks I own",
+    "incomplete": "My deck is incomplete",
+    "clear": "Clear filters",
+    "results_one": "{{count}} game",
+    "results_other": "{{count}} games",
+    "empty": "No game matches those filters.",
+    "apply": "Apply filters",
+    "other": "Other",
+    "filtersApplied_one": "{{count}} filter applied",
+    "filtersApplied_other": "{{count}} filters applied",
+    "noDecksOwned": "You have not marked any deck as yours yet. Go to Decks and tap “I own it”."
+  },
+  "game": {
+    "needs": "What you need",
+    "bestWith": "best with {{n}}",
+    "teams": "in partnerships",
+    "extras": "Also",
+    "complexity": "Complexity {{n}} of 5",
+    "ageMin": "ages {{n}}+",
+    "missing": {
+      "label": "Missing cards",
+      "strict": "Needs a complete deck",
+      "tolerant": "Playable with a card or two missing",
+      "irrelevant": "Missing cards don't matter"
+    },
+    "play": "Play",
+    "explain": "Explain it another way",
+    "ask": "Ask about a situation",
+    "rules": "Rules",
+    "variants": "Variants",
+    "comments": "Comments",
+    "adult": "18+",
+    "byAuthor": "by {{name}}"
+  },
+  "match": {
+    "startTitle": "Start a match",
+    "howMany": "How many players?",
+    "whichDeck": "Which deck?",
+    "names": "Names (optional)",
+    "namePlaceholder": "Player {{n}}",
+    "start": "Start",
+    "notes": "Notes",
+    "notesPlaceholder": "Scores, hands, anything. Saves itself.",
+    "calc": "Tally",
+    "timer": "Timer",
+    "rules": "Rules",
+    "referee": "Referee",
+    "refereeOffline": "The referee needs a connection. Here are the rules meanwhile.",
+    "refereeSoon": "The AI referee arrives in milestone M7. Until then the rules decide.",
+    "end": "End match",
+    "ended": "Match ended",
+    "total": "Total",
+    "add": "Add",
+    "clear": "Clear",
+    "round": "Round",
+    "start_round": "Start round",
+    "pause": "Pause",
+    "reset": "Reset",
+    "jumpTo": "Jump to",
+    "confirmEnd": "End the match? Notes are saved.",
+    "history": "My matches",
+    "stake": "What are we playing for?",
+    "stakeHint": "Optional. Whatever is at stake, in your own words.",
+    "stakePlaceholder": "a beer, dinner…",
+    "stakeNothing": "nothing",
+    "stakeIdeas": [
+      "a beer",
+      "the coffee",
+      "dinner",
+      "the washing up"
+    ],
+    "invite": "Invite",
+    "inviteNoGroups": "No groups yet. You can type the names in below.",
+    "inviteLocal": "Inviting a group fills in the player names.",
+    "invitePending": "Pinging their own phones needs accounts; for now the group fills in the names."
+  },
+  "advisory": {
+    "title": "For adults — 18+",
+    "body": "This game involves alcohol. If you are under 18, do not drink. Know your limit, drink water, and never drive after drinking.",
+    "accept": "I understand",
+    "back": "Go back"
+  },
+  "deck": {
+    "cards_one": "{{count}} card",
+    "cards_other": "{{count}} cards",
+    "suits": "Suits",
+    "ranks": "Ranks",
+    "extras": "Extra cards",
+    "kind": {
+      "standard": "standard",
+      "variant": "variant",
+      "custom": "invented"
+    },
+    "basedOn": "based on {{name}}",
+    "iOwnIt": "I own it",
+    "games": "Games for this deck",
+    "search": "Search decks",
+    "filterKind": "Kind",
+    "filterSize": "Size",
+    "size": {
+      "small": "up to 40",
+      "medium": "41 to 54",
+      "large": "over 54"
+    },
+    "noneFound": "No deck matches that search.",
+    "showAll_one": "See {{count}} more deck",
+    "showAll_other": "See the other {{count}} decks"
+  },
+  "auth": {
+    "title": "Sign in",
+    "body": "Type your email and we send you a link. No passwords.",
+    "email": "Email",
+    "send": "Send me the link",
+    "sending": "Sending…",
+    "sentTitle": "Check your email",
+    "sentBody": "We sent a link to {{email}}. Open it on this device and you are in.",
+    "useAnother": "Use another email",
+    "noPassword": "No passwords stored: a fresh link every time.",
+    "notConfigured": "No database is connected yet, so signing in is not possible. That is the next step.",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "reviewQueue": "Games to review",
+    "role": {
+      "owner": "owner",
+      "moderator": "moderator"
+    },
+    "deleteAccount": "Delete my account",
+    "deleteConfirm": "Sure? This deletes your account and everything of yours: favourites, decks, folders, groups, matches and messages. It cannot be undone.",
+    "deleteKeeps": "Games you published stay in the catalogue, without your name.",
+    "deleting": "Deleting…",
+    "privacy": "Privacy"
+  },
+  "friends": {
+    "list": "Your friends",
+    "invite": "Invite a friend",
+    "inviteHint": "Share the app link however you like. Once there are accounts, the link will carry you inside it.",
+    "inviteText": "Come play Cartas: card game rules and a panel for the match.",
+    "inviteCopied": "Link copied.",
+    "needsAccount": "Sign in with your email to have a friends list. People find you by your username, never by your email.",
+    "noneYet": "No friends yet. Search for them below by username.",
+    "requests": "Asked to be your friend",
+    "waiting": "Waiting for an answer",
+    "find": "Find people",
+    "findPlaceholder": "Username or name…",
+    "findHint": "By name, not by email, so nobody can work out where you have an account. Type at least 2 letters.",
+    "nobodyFound": "Nobody here goes by that ({{q}}).",
+    "add": "Add",
+    "sent": "Asked",
+    "accept": "Accept",
+    "decline": "Decline",
+    "remove": "Remove",
+    "blocked": "Blocked"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "onlyMine": "Only my favorites",
+    "toggleGame": "Favorite {{name}}",
+    "toggleDeck": "Favorite {{name}}"
+  },
+  "folders": {
+    "title": "Deck folders",
+    "empty": "Make a folder to group your decks: “home”, “travel”, “the pub lot”.",
+    "new": "Create",
+    "placeholder": "Folder name",
+    "delete": "Delete {{name}}",
+    "addTo": "Add to a folder",
+    "howToAdd": "Empty. On any deck, tap “Add to a folder”.",
+    "addDecks": "Add decks"
+  },
+  "groups": {
+    "title": "Groups",
+    "empty": "Make a group with the people you play with and your recent matches land here.",
+    "name": "Group name",
+    "members": "Members",
+    "create": "Create group",
+    "delete": "Delete the group {{name}}",
+    "deleteShort": "Delete",
+    "manage": "Manage groups",
+    "lastMatches": "Your recent matches together",
+    "noMatches": "None yet. Invite the group when you start a match and it shows up here.",
+    "chat": "Group chat",
+    "chatLocal": "This phone only for now: a shared scratchpad (“Luis is buying next time”). With accounts it becomes a real chat.",
+    "chatPlaceholder": "Write something…",
+    "send": "Send",
+    "me": "Me",
+    "message": "Message to the group",
+    "membersHint": "For now these are loose names, on this phone only. Once there are accounts, members will be real friends of yours and the group chat will reach them.",
+    "membersPlaceholder": "Members (Sergio, Emilio, Pedro)",
+    "pickFriends": "Pick your friends",
+    "noFriendsYet": "No accepted friends yet. Search for them above, or add loose names below.",
+    "extraNames": "Loose names",
+    "extraNamesHint": "For whoever has no account. The chat does not reach them: they are just a name in the group.",
+    "add": "Add",
+    "addName": "Add a name…",
+    "removeMember": "Remove {{name}} from the group",
+    "realAccount": "Has an account: gets the chat",
+    "justAName": "Just a name: does not get the chat"
+  },
+  "profile": {
+    "edit": "Your name and handle",
+    "displayName": "Name others see",
+    "username": "Username",
+    "usernameHint": "This is how friends find you. Lower case, numbers and underscore; {{min}} to {{max}} characters.",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved.",
+    "taken": "That username is taken. Try another.",
+    "invalid": "That username will not do. Use lower case, numbers and underscore.",
+    "too-short": "Too short: {{min}} characters minimum.",
+    "too-long": "Too long: 24 characters maximum.",
+    "bad-characters": "Lower case without accents, numbers and underscore only (no ñ, accents or spaces).",
+    "settings": "Settings",
+    "hideAdult": "Hide 18+ games",
+    "hideAdultHint": "Keeps them out of search and lists. Private to you: nobody else can read it.",
+    "myGames": "My games",
+    "newGame": "Publish one",
+    "noGames": "You have not published a game yet. If you play something that is not here, write it up.",
+    "gameStatus": {
+      "draft": "draft",
+      "pending_review": "in review",
+      "published": "published",
+      "rejected": "rejected",
+      "archived": "archived"
+    }
+  },
+  "sync": {
+    "failed": "Your favourites and folders could not be saved to your account. They are still on this phone; the next change retries."
+  },
+  "review": {
+    "title": "Games to review",
+    "intro": "Every submitted game waits here, shown exactly as a reader will see it, so deciding is reading rather than digging.",
+    "empty": "Nothing pending. When somebody submits a game, it shows up here.",
+    "notYours": "This screen is for the owner account only.",
+    "approve": "Approve and publish",
+    "reject": "Reject",
+    "reasonLabel": "Reason for rejecting",
+    "reasonPlaceholder": "What would have to change for this to be published…",
+    "reasonHint": "The author sees this as written, and it is kept on the record. A rejection without a reason is refused.",
+    "confirmReject": "Reject with this reason"
+  },
+  "editor": {
+    "title": "Publish a game",
+    "editing": "Edit the game",
+    "intro": "The spec first — it is the quick part, and what makes you findable. Then the rules.",
+    "needsAccount": "Sign in with your email to publish a game.",
+    "theSpec": "The spec",
+    "theRules": "The rules",
+    "gameTitle": "Game name",
+    "tagline": "One line that sums it up",
+    "taglineHint": "Optional. What reads under the name in the list.",
+    "summary": "Summary",
+    "summaryHint": "Two or three sentences: what it is and why it is worth playing.",
+    "playersMin": "Minimum",
+    "playersMax": "Maximum",
+    "playersBest": "Best with",
+    "teams": "Played in partnerships or teams",
+    "teamSize": "How many per team",
+    "decks": "Decks needed",
+    "decksHint": "Pick the deck and how many copies. Add a line if more than one kind is needed.",
+    "deck": "Deck",
+    "pickDeck": "Pick a deck…",
+    "howMany": "How many",
+    "addDeck": "Add another deck",
+    "removeDeck": "Remove this deck",
+    "missingHint": "What happens if the deck is missing a card. The most appreciated thing you can say.",
+    "missingNotePlaceholder": "For example: the final count does not work without all forty cards.",
+    "durationMin": "Shortest (min)",
+    "durationMax": "Longest (min)",
+    "ageMin": "Minimum age",
+    "extras": "What else is needed",
+    "mechanics": "Tags",
+    "listHint": "Comma separated.",
+    "rulesHint": "The three with an asterisk are required. The rest, only if they add something.",
+    "sectionsLeft": "Still to write: {{list}}",
+    "originalWording": "I wrote these rules myself and did not copy the text from another site or a book.",
+    "copyrightNote": "Nobody owns the rules of a game: you may explain mus freely. The text somebody else wrote to explain them is theirs. Write it in your own words.",
+    "adultOnly": "This game is for adults (alcohol, money or adult themes).",
+    "republishWarning": "This game is already published. Submitting sends it back to the review queue and it stops being visible until approved again.",
+    "saveDraft": "Save draft",
+    "submit": "Submit for review",
+    "saved": "Saved.",
+    "problem": {
+      "title": "Give the game a name.",
+      "summary": "The summary needs at least a sentence (ten characters).",
+      "players": "The player count does not work: the maximum cannot be below the minimum.",
+      "playersBest": "“Best with” has to be between the minimum and the maximum.",
+      "teamSize": "You said it is played in teams: say how many are in each.",
+      "decks": "Pick the deck the game needs.",
+      "duration": "The longest cannot be below the shortest.",
+      "sections": "Objective, Setup or Play is missing: without those three it cannot be played.",
+      "originalWording": "Tick the box saying the text is yours."
+    }
+  },
+  "ai": {
+    "intro": "A card-games expert who explains a game another way, referees with the rules in front of it, or tells you what to play.",
+    "mode": {
+      "explain": "Explain it",
+      "referee": "Referee",
+      "suggest": "What shall we play?"
+    },
+    "modeHint": {
+      "explain": "Re-explains a game however suits you: for a child, in a minute, or by walking through a sample hand.",
+      "referee": "Answers only from that game's published rules, and says when they do not cover it instead of inventing one.",
+      "suggest": "Recommends only games that exist here, with one concrete reason each."
+    },
+    "whichGame": "Which game",
+    "pickGame": "Pick a game…",
+    "register": "How you want it told",
+    "registerOption": {
+      "quick": "In a minute",
+      "kid": "For a child",
+      "example": "With a sample hand",
+      "compare": "Compared to others"
+    },
+    "situation": "What happened at the table",
+    "anythingElse": "Anything else it should know (optional)",
+    "placeholder": {
+      "referee": "We both played a seven at the same time — who wins the trick?",
+      "suggest": "Three of us, not much time, and one has never played.",
+      "explain": "",
+      "author": ""
+    },
+    "ask": "Ask",
+    "asking": "Thinking…",
+    "caveat": "It is an AI and can be wrong. If it contradicts the published rules, the rules win.",
+    "problem": {
+      "not-configured": "No database is connected yet, so the expert cannot work.",
+      "not-deployed": "The expert is not deployed yet. It is written and ready: the function has to be uploaded and the key set (see supabase/functions/ai-expert/README.md).",
+      "no-api-key": "The Anthropic key is missing on the server. Set it with: supabase secrets set ANTHROPIC_API_KEY=…",
+      "sign-in-required": "Sign in to use the expert.",
+      "monthly-limit": "You have reached this month's question limit. It resets on its own.",
+      "game-not-found": "That game is not published, so there are no rules to read.",
+      "question-required": "Write the question.",
+      "unknown": "Something went wrong asking. Try again."
+    }
+  },
+  "privacy": {
+    "title": "Privacy",
+    "intro": "What this app keeps, who can see it, and how to make it go away. No small print.",
+    "whatWeKeep": {
+      "title": "What is kept",
+      "body": "Your email, so you can sign in. Your username and the name others see. What you star, the decks you say you own, your folders, your groups, the matches you play with their notes, and the messages you write in a group. Nothing else: no ads, no tracking, nothing shared with third parties."
+    },
+    "whatIsPublic": {
+      "title": "What anyone can see",
+      "body": "Your username and display name, because that is how friends find you, and any games you publish, with your name as the author. Nobody sees your email: it is not even stored in the profile table that can be queried."
+    },
+    "whatIsPrivate": {
+      "title": "What is only yours",
+      "body": "Your favourites, decks, folders, matches, settings and your groups' chats. The database enforces it rather than a promise: every table has rules that stop another person reading your rows, and automated tests check them."
+    },
+    "where": {
+      "title": "Where it lives",
+      "body": "In Supabase, on Amazon servers in Frankfurt (European Union). The app itself is served from Vercel, which only hands over the page: it stores none of your data."
+    },
+    "ai": {
+      "title": "The AI expert",
+      "body": "If you use the expert, your question and the rules of the game you are asking about are sent to Anthropic to produce the answer. Your email, your name and your matches are not. If you do not use that screen, nothing is sent to anybody."
+    },
+    "howLong": {
+      "title": "How long",
+      "body": "Until you delete it. There is no expiry and no automatic clear-out."
+    },
+    "deleting": {
+      "title": "Deleting everything",
+      "body": "Your profile has a button to delete the account. It really deletes: your email, profile, favourites, decks, folders, groups, matches and messages, and whatever the app kept on this device. The only thing that stays is any game you published, without your name, because those are rules other people are using."
+    },
+    "children": {
+      "title": "Minors",
+      "body": "Games marked 18+ warn before they open and can be hidden from your profile. Nobody is asked for a date of birth: it would prove nothing and would be one more piece of your data kept for no reason."
+    },
+    "contact": {
+      "title": "Questions",
+      "body": "Write to [put your contact email here] and I will answer."
+    },
+    "updated": "Updated October 2026"
+  }
+}

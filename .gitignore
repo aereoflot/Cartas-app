@@ -1,0 +1,41 @@
+# dependencies
+node_modules/
+.pnp*
+
+# build
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# supabase
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+
+# editors / os
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# logs
+*.log
+npm-debug.log*
+
+# local test postgres
+.cache/
+
+# typescript incremental build info
+*.tsbuildinfo
+
+# python bytecode
+__pycache__/
+*.pyc

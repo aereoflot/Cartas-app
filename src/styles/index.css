@@ -1,0 +1,108 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens. Warm paper and a card-table green; nothing shouts, because the
+   screen sits next to real cards. */
+@theme {
+  --color-bg: #faf8f3;
+  --color-surface: #ffffff;
+  --color-surface-2: #f2efe7;
+  --color-ink: #1b1815;
+  --color-muted: #6b6459;
+  --color-line: #e3ded2;
+  --color-accent: #1f6f4a;
+  --color-accent-soft: #e6f0ea;
+  --color-accent-ink: #ffffff;
+  --color-danger: #b3261e;
+  --color-warn: #8a5a00;
+
+  /* suit colours, keyed by the `color` field in a deck's suit JSON */
+  --color-suit-gold: #a5751a;
+  --color-suit-red: #b3261e;
+  --color-suit-blue: #1d4e89;
+  --color-suit-green: #1f6f4a;
+  --color-suit-black: #26231f;
+  --color-suit-brown: #6f4a2a;
+  --color-suit-yellow: #997a00;
+  --color-suit-grey: #5a5550;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+
+  --radius-card: 0.875rem;
+}
+
+/* Dark theme. `.dark` / `.light` on <html> wins; otherwise follow the system. */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --color-bg: #121311;
+    --color-surface: #1a1c19;
+    --color-surface-2: #23261f;
+    --color-ink: #f0ece2;
+    --color-muted: #a09a8e;
+    --color-line: #32352d;
+    --color-accent: #4caf7d;
+    --color-accent-soft: #1d2b23;
+    --color-accent-ink: #0d1510;
+    --color-danger: #ef857c;
+    --color-warn: #d7a03a;
+    --color-suit-gold: #d2a24a;
+    --color-suit-red: #ef857c;
+    --color-suit-blue: #7fa8de;
+    --color-suit-green: #6fc295;
+    --color-suit-black: #cfcabf;
+    --color-suit-brown: #bb8c62;
+    --color-suit-yellow: #d6bd54;
+    --color-suit-grey: #a8a29a;
+  }
+}
+
+:root.dark {
+  --color-bg: #121311;
+  --color-surface: #1a1c19;
+  --color-surface-2: #23261f;
+  --color-ink: #f0ece2;
+  --color-muted: #a09a8e;
+  --color-line: #32352d;
+  --color-accent: #4caf7d;
+  --color-accent-soft: #1d2b23;
+  --color-accent-ink: #0d1510;
+  --color-danger: #ef857c;
+  --color-warn: #d7a03a;
+  --color-suit-gold: #d2a24a;
+  --color-suit-red: #ef857c;
+  --color-suit-blue: #7fa8de;
+  --color-suit-green: #6fc295;
+  --color-suit-black: #cfcabf;
+  --color-suit-brown: #bb8c62;
+  --color-suit-yellow: #d6bd54;
+  --color-suit-grey: #a8a29a;
+}
+
+html {
+  color-scheme: light dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  overscroll-behavior-y: none;
+}
+
+/* respect the notch, and leave room for the bottom tab bar */
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

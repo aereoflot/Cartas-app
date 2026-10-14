@@ -1,0 +1,427 @@
+{
+  "app": {
+    "name": "Cartas",
+    "tagline": "Reglas, mazos y partidas"
+  },
+  "nav": {
+    "home": "Inicio",
+    "search": "Buscar",
+    "decks": "Mazos",
+    "friends": "Amigos",
+    "profile": "Perfil",
+    "expert": "Experto"
+  },
+  "common": {
+    "back": "Volver",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "any": "cualquiera",
+    "players": "jugadores",
+    "player": "jugador",
+    "minutes": "min",
+    "decks": "mazos",
+    "deck": "mazo",
+    "soon": "En construcción",
+    "soonBody": "Esta parte llega en un hito posterior. El plan está en docs/product-spec.md.",
+    "theme": "Tema",
+    "sampleData": "Datos de muestra",
+    "sampleDataBody": "No hay Supabase configurado, así que ves un catálogo de ejemplo. Copia .env.example a .env.local para conectarlo.",
+    "loading": "Cargando…",
+    "loadFailed": "No se ha podido cargar el catálogo."
+  },
+  "home": {
+    "resume": "Reanudar partida",
+    "resumeSince": "empezada hace {{time}}",
+    "favorites": "Juegos favoritos",
+    "favoritesEmpty": "Aquí aparecerán tus juegos favoritos. Toca la estrella de cualquier juego.",
+    "favDecks": "Mazos favoritos",
+    "playNow": "Jugar ahora",
+    "favDecksEmpty": "Aquí aparecerán tus mazos favoritos. Toca la estrella de cualquier mazo."
+  },
+  "search": {
+    "title": "Buscar juegos",
+    "placeholder": "Buscar por nombre…",
+    "filters": "Filtros",
+    "players": "Jugadores",
+    "deckCount": "Mazos necesarios",
+    "deckType": "Tipo de baraja",
+    "duration": "Duración",
+    "complexity": "Dificultad",
+    "mineOnly": "Solo con mis mazos",
+    "incomplete": "Mi baraja está incompleta",
+    "clear": "Quitar filtros",
+    "results_one": "{{count}} juego",
+    "results_other": "{{count}} juegos",
+    "empty": "Ningún juego encaja con esos filtros.",
+    "apply": "Aplicar filtros",
+    "other": "Otros",
+    "filtersApplied_one": "{{count}} filtro aplicado",
+    "filtersApplied_other": "{{count}} filtros aplicados",
+    "noDecksOwned": "Todavía no has marcado ningún mazo como tuyo. Ve a Mazos y pulsa “Lo tengo”."
+  },
+  "game": {
+    "needs": "Qué necesitas",
+    "bestWith": "mejor con {{n}}",
+    "teams": "por parejas",
+    "extras": "Además",
+    "complexity": "Dificultad {{n}} de 5",
+    "ageMin": "desde {{n}} años",
+    "missing": {
+      "label": "Cartas que falten",
+      "strict": "Hace falta la baraja completa",
+      "tolerant": "Se puede jugar aunque falte alguna",
+      "irrelevant": "Da igual si faltan cartas"
+    },
+    "play": "Jugar",
+    "explain": "Explícamelo de otra forma",
+    "ask": "Preguntar una situación",
+    "rules": "Reglas",
+    "variants": "Variantes",
+    "comments": "Comentarios",
+    "adult": "+18",
+    "byAuthor": "por {{name}}"
+  },
+  "match": {
+    "startTitle": "Empezar partida",
+    "howMany": "¿Cuántos jugadores?",
+    "whichDeck": "¿Con qué mazo?",
+    "names": "Nombres (opcional)",
+    "namePlaceholder": "Jugador {{n}}",
+    "start": "Empezar",
+    "notes": "Notas",
+    "notesPlaceholder": "Puntos, manos, lo que sea. Se guarda solo.",
+    "calc": "Cuentas",
+    "timer": "Tiempo",
+    "rules": "Reglas",
+    "referee": "Árbitro",
+    "refereeOffline": "El árbitro necesita internet. Mientras, aquí tienes las reglas.",
+    "refereeSoon": "El árbitro con IA llega en el hito M7. Hasta entonces, las reglas manda.",
+    "end": "Terminar partida",
+    "ended": "Partida terminada",
+    "total": "Total",
+    "add": "Añadir",
+    "clear": "Borrar",
+    "round": "Ronda",
+    "start_round": "Empezar ronda",
+    "pause": "Pausa",
+    "reset": "A cero",
+    "jumpTo": "Ir a",
+    "confirmEnd": "¿Terminar la partida? Las notas se guardan.",
+    "history": "Mis partidas",
+    "stake": "¿Qué nos jugamos?",
+    "stakeHint": "Opcional. Lo que hay en juego, en vuestras palabras.",
+    "stakePlaceholder": "una cerveza, pagar la cena…",
+    "stakeNothing": "nada",
+    "stakeIdeas": [
+      "una cerveza",
+      "el café",
+      "pagar la cena",
+      "fregar los platos"
+    ],
+    "invite": "Invitar",
+    "inviteNoGroups": "No tienes grupos todavía. Puedes escribir los nombres a mano abajo.",
+    "inviteLocal": "Invitar a un grupo rellena los nombres de la partida.",
+    "invitePending": "Avisar a sus móviles necesita cuentas; por ahora el grupo rellena los nombres."
+  },
+  "advisory": {
+    "title": "Para adultos — +18",
+    "body": "Este juego se juega con alcohol. Si tienes menos de 18 años, no bebas. Conoce tu límite, bebe agua y nunca conduzcas después de beber.",
+    "accept": "Lo entiendo",
+    "back": "Volver"
+  },
+  "deck": {
+    "cards_one": "{{count}} carta",
+    "cards_other": "{{count}} cartas",
+    "suits": "Palos",
+    "ranks": "Figuras y números",
+    "extras": "Cartas aparte",
+    "kind": {
+      "standard": "estándar",
+      "variant": "variante",
+      "custom": "inventado"
+    },
+    "basedOn": "a partir de {{name}}",
+    "iOwnIt": "Lo tengo",
+    "games": "Juegos para este mazo",
+    "search": "Buscar mazos",
+    "filterKind": "Tipo",
+    "filterSize": "Tamaño",
+    "size": {
+      "small": "hasta 40",
+      "medium": "41 a 54",
+      "large": "más de 54"
+    },
+    "noneFound": "Ningún mazo encaja con esa búsqueda.",
+    "showAll_one": "Ver {{count}} mazo más",
+    "showAll_other": "Ver los {{count}} mazos restantes"
+  },
+  "auth": {
+    "title": "Entrar",
+    "body": "Escribe tu correo y te mandamos un enlace para entrar. Sin contraseñas.",
+    "email": "Correo",
+    "send": "Mandarme el enlace",
+    "sending": "Enviando…",
+    "sentTitle": "Mira tu correo",
+    "sentBody": "Te hemos mandado un enlace a {{email}}. Ábrelo en este mismo dispositivo y entrarás directo.",
+    "useAnother": "Usar otro correo",
+    "noPassword": "No guardamos contraseñas: cada vez que entres, un enlace nuevo.",
+    "notConfigured": "Todavía no hay base de datos conectada, así que no se puede entrar. Es el siguiente paso del proyecto.",
+    "signIn": "Entrar",
+    "signOut": "Salir",
+    "reviewQueue": "Juegos por revisar",
+    "role": {
+      "owner": "dueño",
+      "moderator": "moderador"
+    },
+    "deleteAccount": "Borrar mi cuenta",
+    "deleteConfirm": "¿Seguro? Se borra tu cuenta y todo lo tuyo: favoritos, mazos, carpetas, grupos, partidas y mensajes. No se puede deshacer.",
+    "deleteKeeps": "Los juegos que hayas publicado se quedan en el catálogo, sin tu nombre.",
+    "deleting": "Borrando…",
+    "privacy": "Privacidad"
+  },
+  "friends": {
+    "list": "Tus amigos",
+    "invite": "Invitar a un amigo",
+    "inviteHint": "Comparte el enlace de la app por WhatsApp, Telegram o donde quieras. Cuando haya cuentas, el enlace vendrá contigo dentro.",
+    "inviteText": "Te invito a Cartas: reglas de juegos de cartas y panel para la partida.",
+    "inviteCopied": "Enlace copiado.",
+    "needsAccount": "Entra con tu correo para tener lista de amigos. Se te busca por tu nombre de usuario, nunca por tu correo.",
+    "noneYet": "Todavía no tienes amigos. Búscalos abajo por su nombre de usuario.",
+    "requests": "Te han pedido ser amigos",
+    "waiting": "Esperando respuesta",
+    "find": "Buscar personas",
+    "findPlaceholder": "Nombre de usuario o nombre…",
+    "findHint": "Por su nombre, no por su correo: así nadie averigua con quién tienes cuenta. Escribe al menos 2 letras.",
+    "nobodyFound": "Nadie se llama así por aquí ({{q}}).",
+    "add": "Añadir",
+    "sent": "Pedido",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "remove": "Quitar",
+    "blocked": "Bloqueado"
+  },
+  "favorites": {
+    "title": "Favoritos",
+    "onlyMine": "Solo mis favoritos",
+    "toggleGame": "Marcar {{name}} como favorito",
+    "toggleDeck": "Marcar {{name}} como favorito"
+  },
+  "folders": {
+    "title": "Carpetas de mazos",
+    "empty": "Crea una carpeta para agrupar tus mazos: “casa”, “viaje”, “los del bar”.",
+    "new": "Crear",
+    "placeholder": "Nombre de la carpeta",
+    "delete": "Borrar {{name}}",
+    "addTo": "Añadir a una carpeta",
+    "howToAdd": "Vacía. En cada mazo, pulsa “Añadir a una carpeta”.",
+    "addDecks": "Añadir mazos"
+  },
+  "groups": {
+    "title": "Grupos",
+    "empty": "Haz un grupo con la gente con la que juegas y verás aquí vuestras últimas partidas.",
+    "name": "Nombre del grupo",
+    "members": "Integrantes",
+    "create": "Crear grupo",
+    "delete": "Borrar el grupo {{name}}",
+    "deleteShort": "Borrar",
+    "manage": "Gestionar grupos",
+    "lastMatches": "Últimas partidas entre vosotros",
+    "noMatches": "Aún ninguna. Al empezar una partida, invita al grupo y aparecerá aquí.",
+    "chat": "Chat del grupo",
+    "chatLocal": "Por ahora solo en este móvil: sirve de pizarra común (“Luis paga la próxima”). Con cuentas pasará a ser un chat de verdad.",
+    "chatPlaceholder": "Escribe algo…",
+    "send": "Enviar",
+    "me": "Yo",
+    "message": "Mensaje para el grupo",
+    "membersHint": "Por ahora son nombres sueltos, solo para este móvil. Cuando haya cuentas, los integrantes serán amigos tuyos de verdad y el chat del grupo les llegará a ellos.",
+    "membersPlaceholder": "Integrantes (Sergio, Emilio, Pedro)",
+    "pickFriends": "Elige a tus amigos",
+    "noFriendsYet": "Todavía no tienes amigos aceptados. Búscalos arriba, o añade nombres sueltos abajo.",
+    "extraNames": "Nombres sueltos",
+    "extraNamesHint": "Para quien no tenga cuenta. A estos el chat no les llega: son solo un nombre en el grupo.",
+    "add": "Añadir",
+    "addName": "Añadir un nombre…",
+    "removeMember": "Quitar a {{name}} del grupo",
+    "realAccount": "Tiene cuenta: le llega el chat",
+    "justAName": "Solo un nombre: no le llega el chat"
+  },
+  "profile": {
+    "edit": "Tu nombre y tu usuario",
+    "displayName": "Nombre que ven los demás",
+    "username": "Nombre de usuario",
+    "usernameHint": "Con esto te encuentran tus amigos. Minúsculas, números y guion bajo; entre {{min}} y {{max}} caracteres.",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saved": "Guardado.",
+    "taken": "Ese nombre de usuario ya está cogido. Prueba otro.",
+    "invalid": "Ese nombre de usuario no vale. Usa minúsculas, números y guion bajo.",
+    "too-short": "Demasiado corto: mínimo {{min}} caracteres.",
+    "too-long": "Demasiado largo: máximo 24 caracteres.",
+    "bad-characters": "Solo minúsculas sin acentos, números y guion bajo (nada de ñ, tildes ni espacios).",
+    "settings": "Ajustes",
+    "hideAdult": "Esconder los juegos +18",
+    "hideAdultHint": "Los quita de la búsqueda y de las listas. Es tuyo y privado: nadie más puede leerlo.",
+    "myGames": "Mis juegos",
+    "newGame": "Publicar uno",
+    "noGames": "Todavía no has publicado ningún juego. Si jugáis a algo que no está aquí, escríbelo.",
+    "gameStatus": {
+      "draft": "borrador",
+      "pending_review": "en revisión",
+      "published": "publicado",
+      "rejected": "rechazado",
+      "archived": "archivado"
+    }
+  },
+  "sync": {
+    "failed": "Tus favoritos y carpetas no se han podido guardar en tu cuenta. Siguen en este móvil; se reintenta al próximo cambio."
+  },
+  "review": {
+    "title": "Juegos por revisar",
+    "intro": "Cada juego que alguien envía espera aquí. Se ve igual que lo verá quien lo lea, para que decidir sea leer y no investigar.",
+    "empty": "No hay nada pendiente. Cuando alguien envíe un juego, aparecerá aquí.",
+    "notYours": "Esta pantalla es solo para la cuenta dueña.",
+    "approve": "Aprobar y publicar",
+    "reject": "Rechazar",
+    "reasonLabel": "Motivo del rechazo",
+    "reasonPlaceholder": "Qué habría que arreglar para que se publique…",
+    "reasonHint": "El autor lo verá tal cual, y queda registrado. Sin motivo no se puede rechazar.",
+    "confirmReject": "Rechazar con este motivo"
+  },
+  "editor": {
+    "title": "Publicar un juego",
+    "editing": "Editar el juego",
+    "intro": "Primero la ficha, que es lo rápido y lo que hace que te encuentren. Después las reglas.",
+    "needsAccount": "Entra con tu correo para poder publicar un juego.",
+    "theSpec": "La ficha",
+    "theRules": "Las reglas",
+    "gameTitle": "Nombre del juego",
+    "tagline": "Una línea que lo resuma",
+    "taglineHint": "Opcional. Lo que se lee debajo del nombre en la lista.",
+    "summary": "Resumen",
+    "summaryHint": "Dos o tres frases: de qué va y por qué merece la pena.",
+    "playersMin": "Mínimo",
+    "playersMax": "Máximo",
+    "playersBest": "Mejor con",
+    "teams": "Se juega por parejas o equipos",
+    "teamSize": "Cuántos por equipo",
+    "decks": "Barajas que hacen falta",
+    "decksHint": "Elige la baraja y cuántas copias. Si hace falta más de un tipo, añade otra línea.",
+    "deck": "Baraja",
+    "pickDeck": "Elige una baraja…",
+    "howMany": "Cuántas",
+    "addDeck": "Añadir otra baraja",
+    "removeDeck": "Quitar esta baraja",
+    "missingHint": "Lo que pasa si a la baraja le falta una carta. Es lo que más agradece quien busca.",
+    "missingNotePlaceholder": "Por ejemplo: la cuenta final no cuadra sin las cuarenta cartas.",
+    "durationMin": "Duración mínima (min)",
+    "durationMax": "Duración máxima (min)",
+    "ageMin": "Edad mínima",
+    "extras": "Qué más hace falta",
+    "mechanics": "Etiquetas",
+    "listHint": "Separado por comas.",
+    "rulesHint": "Las tres con asterisco son obligatorias. Las demás, si aportan algo.",
+    "sectionsLeft": "Te quedan por escribir: {{list}}",
+    "originalWording": "Estas reglas las he escrito yo y no he copiado el texto de otra web ni de un libro.",
+    "copyrightNote": "Las reglas de un juego no son de nadie: puedes explicar el mus libremente. El texto con el que alguien las explicó, sí es suyo. Escríbelo con tus palabras.",
+    "adultOnly": "Este juego es para adultos (alcohol, dinero o temas de adultos).",
+    "republishWarning": "Este juego ya está publicado. Al enviarlo vuelve a la cola de revisión y deja de verse hasta que se apruebe otra vez.",
+    "saveDraft": "Guardar borrador",
+    "submit": "Enviar a revisión",
+    "saved": "Guardado.",
+    "problem": {
+      "title": "Ponle un nombre al juego.",
+      "summary": "El resumen necesita al menos una frase (diez caracteres).",
+      "players": "El número de jugadores no cuadra: el máximo no puede ser menor que el mínimo.",
+      "playersBest": "El “mejor con” tiene que estar entre el mínimo y el máximo.",
+      "teamSize": "Dices que se juega por equipos: pon cuántos van en cada uno.",
+      "decks": "Falta elegir la baraja que hace falta.",
+      "duration": "La duración máxima no puede ser menor que la mínima.",
+      "sections": "Faltan Objetivo, Preparación o Desarrollo: sin esas tres no se puede jugar.",
+      "originalWording": "Marca la casilla de que el texto es tuyo."
+    }
+  },
+  "ai": {
+    "intro": "Un experto en juegos de cartas que te lo explica de otra forma, hace de árbitro con las reglas delante, o te dice a qué jugar.",
+    "mode": {
+      "explain": "Explícame",
+      "referee": "Árbitro",
+      "suggest": "¿A qué jugamos?"
+    },
+    "modeHint": {
+      "explain": "Te vuelve a explicar un juego como mejor te venga: para un niño, en un minuto, o contándote una mano de ejemplo.",
+      "referee": "Responde solo con lo que digan las reglas publicadas de ese juego, y te dice cuándo no lo cubren en vez de inventarse una regla.",
+      "suggest": "Recomienda solo juegos que existen aquí, con una razón concreta para cada uno."
+    },
+    "whichGame": "De qué juego",
+    "pickGame": "Elige un juego…",
+    "register": "Cómo quieres que te lo cuente",
+    "registerOption": {
+      "quick": "En un minuto",
+      "kid": "Para un niño",
+      "example": "Con una mano de ejemplo",
+      "compare": "Comparándolo con otros"
+    },
+    "situation": "Qué ha pasado en la mesa",
+    "anythingElse": "Algo más que deba saber (opcional)",
+    "placeholder": {
+      "referee": "Hemos echado los dos un siete al mismo tiempo, ¿quién gana la baza?",
+      "suggest": "Somos tres, hay poco tiempo y uno no ha jugado nunca.",
+      "explain": "",
+      "author": ""
+    },
+    "ask": "Preguntar",
+    "asking": "Pensando…",
+    "caveat": "Es una IA y puede equivocarse. Si contradice las reglas publicadas, manda el texto de las reglas.",
+    "problem": {
+      "not-configured": "Todavía no hay base de datos conectada, así que el experto no puede funcionar.",
+      "not-deployed": "El experto aún no está desplegado en el servidor. Está escrito y listo: hay que subir la función y poner la clave (mira supabase/functions/ai-expert/README.md).",
+      "no-api-key": "Falta la clave de Anthropic en el servidor. Se pone con: supabase secrets set ANTHROPIC_API_KEY=…",
+      "sign-in-required": "Entra con tu cuenta para usar el experto.",
+      "monthly-limit": "Has llegado al límite de preguntas de este mes. Se reinicia solo.",
+      "game-not-found": "Ese juego no está publicado, así que no hay reglas que mirar.",
+      "question-required": "Escribe la pregunta.",
+      "unknown": "Algo ha fallado al preguntar. Inténtalo otra vez."
+    }
+  },
+  "privacy": {
+    "title": "Privacidad",
+    "intro": "Qué guarda esta app, quién puede verlo y cómo hacerlo desaparecer. Sin letra pequeña.",
+    "whatWeKeep": {
+      "title": "Qué se guarda",
+      "body": "Tu correo, para poder entrar. Tu nombre de usuario y el nombre que ven los demás. Lo que marcas como favorito, los mazos que dices tener, tus carpetas, tus grupos, las partidas que juegas con sus notas, y los mensajes que escribes en un grupo. Nada más: no hay anuncios, ni seguimiento, ni se comparte con terceros."
+    },
+    "whatIsPublic": {
+      "title": "Qué ve cualquiera",
+      "body": "Tu nombre de usuario y tu nombre visible, porque así te encuentran tus amigos, y los juegos que publiques, con tu nombre como autor. Tu correo no lo ve nadie: ni siquiera se guarda en la tabla de perfiles que se puede consultar."
+    },
+    "whatIsPrivate": {
+      "title": "Qué es solo tuyo",
+      "body": "Tus favoritos, tus mazos, tus carpetas, tus partidas, tus ajustes y los chats de tus grupos. Lo impone la base de datos, no una promesa: cada tabla tiene reglas que impiden a otra persona leer tus filas, y hay pruebas automáticas que lo comprueban."
+    },
+    "where": {
+      "title": "Dónde está",
+      "body": "En Supabase, sobre servidores de Amazon en Fráncfort (Unión Europea). La app se sirve desde Vercel, que solo entrega la página: no guarda tus datos."
+    },
+    "ai": {
+      "title": "El experto con IA",
+      "body": "Si usas el experto, tu pregunta y las reglas del juego sobre el que preguntas se envían a Anthropic para generar la respuesta. No se envía tu correo, ni tu nombre, ni tus partidas. Si no usas esa pantalla, no se envía nada a nadie."
+    },
+    "howLong": {
+      "title": "Cuánto se guarda",
+      "body": "Hasta que lo borres. No hay caducidad ni limpiezas automáticas."
+    },
+    "deleting": {
+      "title": "Cómo borrarlo todo",
+      "body": "En tu perfil hay un botón para borrar la cuenta. Borra de verdad: tu correo, tu perfil, tus favoritos, mazos, carpetas, grupos, partidas y mensajes, y también lo que la app hubiera guardado en este dispositivo. Lo único que se queda son los juegos que hayas publicado, sin tu nombre, porque son reglas que otra gente está usando."
+    },
+    "children": {
+      "title": "Menores",
+      "body": "Los juegos marcados +18 avisan antes de abrirse y se pueden esconder desde tu perfil. No pedimos la fecha de nacimiento a nadie: no demostraría nada y sería otro dato tuyo guardado sin motivo."
+    },
+    "contact": {
+      "title": "Dudas",
+      "body": "Escribe a [pon aquí tu correo de contacto] y te respondo."
+    },
+    "updated": "Actualizado en octubre de 2026"
+  }
+}

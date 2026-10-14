@@ -1,0 +1,3 @@
+# Netlify and Cloudflare Pages read this. Same reason as netlify.toml: the app
+# owns its routes, so every path has to be served index.html.
+/*  /index.html  200
