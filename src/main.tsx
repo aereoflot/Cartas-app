@@ -25,3 +25,14 @@ createRoot(root).render(
     </QueryClientProvider>
   </StrictMode>,
 )
+
+// The worker is what makes the app installable and what keeps the shell
+// readable with no signal. Only in a build: in dev it would serve yesterday's
+// bundle back to you and cost an afternoon.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/sw.js').catch(() => {
+      /* a blocked or unsupported worker costs the install offer, nothing else */
+    })
+  })
+}

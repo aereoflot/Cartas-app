@@ -57,7 +57,12 @@
     "other": "Other",
     "filtersApplied_one": "{{count}} filter applied",
     "filtersApplied_other": "{{count}} filters applied",
-    "noDecksOwned": "You have not marked any deck as yours yet. Go to Decks and tap “I own it”."
+    "noDecksOwned": "You have not marked any deck as yours yet. Go to Decks and tap “I own it”.",
+    "mineUnpublished": "Yours, unpublished",
+    "createAny": "A game missing?",
+    "createAnyBody": "Add it yourself. Keep it private, or send it for review.",
+    "createNamed": "Create “{{name}}”",
+    "createNamedBody": "Not in the catalogue. Write it up, and you can use it while it is reviewed."
   },
   "game": {
     "needs": "What you need",
@@ -129,6 +134,25 @@
     "accept": "I understand",
     "back": "Go back"
   },
+  "install": {
+    "title": "Install Cartas on your phone",
+    "body": "It opens like an app, starts faster, and the rules stay with you when the signal does not.",
+    "cta": "Install the app",
+    "ios1": "Tap Share in Safari's bar.",
+    "ios2": "Choose “Add to Home Screen”.",
+    "manual1": "Open your browser's menu.",
+    "manual2": "Choose “Install app” or “Add to Home Screen”.",
+    "accountTitle": "With an account, or as a guest?",
+    "accountBody": "With an account, your favourites and matches follow you to any phone. As a guest they stay on this one, and you can make the account whenever you like.",
+    "createAccount": "Create account",
+    "guest": "Continue as guest",
+    "later": "Not now",
+    "notWorking": "Not working?",
+    "howTo": "See how to install it",
+    "profileTitle": "Install the app",
+    "profileBody": "If you said no earlier, it is here whenever you want it.",
+    "installed": "Installed. Open it from your home screen."
+  },
   "deck": {
     "cards_one": "{{count}} card",
     "cards_other": "{{count}} cards",
@@ -177,7 +201,34 @@
     "deleteConfirm": "Sure? This deletes your account and everything of yours: favourites, decks, folders, groups, matches and messages. It cannot be undone.",
     "deleteKeeps": "Games you published stay in the catalogue, without your name.",
     "deleting": "Deleting…",
-    "privacy": "Privacy"
+    "privacy": "Privacy",
+    "problem": {
+      "rateLimit": "Too many links asked for in a short time. Wait a few minutes and try again: the previous email still works.",
+      "invalidEmail": "That email does not look valid. Check it and try again.",
+      "offline": "No connection. Check your data or wifi and try again.",
+      "unknown": "The link could not be sent."
+    },
+    "bodyPassword": "Sign in with your email and password.",
+    "signUpTitle": "Create account",
+    "signUpBody": "Pick a handle, give an email and a password. There is nothing to confirm.",
+    "signUpAction": "Create account",
+    "password": "Password",
+    "passwordAgain": "Repeat the password",
+    "passwordMismatch": "The two passwords do not match.",
+    "password_short": "At least {{min}} characters.",
+    "password_common": "That is one of the first passwords anybody would try. Pick another.",
+    "show": "Show",
+    "hide": "Hide",
+    "working": "One moment…",
+    "checking": "Checking…",
+    "handleFree": "Free, it is yours.",
+    "handleTaken": "Somebody already has that handle.",
+    "needAccount": "No account yet? Create one",
+    "haveAccount": "Already have an account? Sign in",
+    "noVerification": "We send you nothing and there is nothing to confirm: creating the account signs you in. The email is only for signing in, and for recovering the password the day you need to.",
+    "emailShape": "Write the whole address, with an @ and a domain.",
+    "handleNote": "This is how friends see you and find you. It cannot be changed later.",
+    "emailNote": "Your email is not published and does not appear on your profile."
   },
   "friends": {
     "list": "Your friends",
@@ -270,7 +321,13 @@
       "published": "published",
       "rejected": "rejected",
       "archived": "archived"
-    }
+    },
+    "usernameFixed": "This is the handle you sign in with, so it does not change. The name people see does.",
+    "passwordTitle": "Password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "changePassword": "Change the password",
+    "passwordChanged": "Password changed."
   },
   "sync": {
     "failed": "Your favourites and folders could not be saved to your account. They are still on this phone; the next change retries."
@@ -338,7 +395,25 @@
       "duration": "The longest cannot be below the shortest.",
       "sections": "Objective, Setup or Play is missing: without those three it cannot be played.",
       "originalWording": "Tick the box saying the text is yours."
-    }
+    },
+    "twoWays": "Saving privately asks only for the title: leave whatever you like empty and come back another day. Sending it for review asks for the minimums above, and while it is reviewed the game is still yours: it stays in the searcher and you can play from it.",
+    "stepVisibility": "For you, or for everyone?",
+    "privateOption": "Just for me",
+    "privateOptionBody": "Quick: a name is enough. Leave whatever you like empty and finish it another day. Nobody else sees it.",
+    "publicOption": "For everyone",
+    "publicOptionBody": "The minimum has to be filled in for it to make sense. It gets reviewed before it goes out, and you can use it meanwhile.",
+    "stepBasics": "Name and what it is",
+    "stepPlayers": "Players",
+    "stepDecks": "What you play with",
+    "stepDetails": "Details (optional)",
+    "stepRules": "The rules",
+    "stepSave": "Save",
+    "stepSend": "Check and send",
+    "stepMissing": "something missing",
+    "next": "Next",
+    "savePrivate": "Save just for me",
+    "privateNote": "Saved for you alone. You will find it in your searcher and your profile, and you can make it public whenever you like.",
+    "publicNote": "Sending it puts it in the review queue. While it waits it is still yours: it stays in your searcher and you can play from it."
   },
   "ai": {
     "intro": "A card-games expert who explains a game another way, referees with the rules in front of it, or tells you what to play.",

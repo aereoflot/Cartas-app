@@ -8,6 +8,7 @@ import { FilterChip } from '@/components/FilterChip'
 import { Loading, LoadFailed } from '@/components/QueryState'
 import { useDecks } from '@/hooks/useCatalogue'
 import { useFavoriteDecks } from '@/hooks/usePrefs'
+import { matchesQuery } from '@/lib/search'
 import { favouritesFirst } from '@/lib/prefs'
 
 /**
@@ -75,8 +76,7 @@ export function DeckSearch({ inputRef }: { inputRef?: RefObject<HTMLInputElement
 
   const results = useMemo(() => {
     const matched = (decks ?? []).filter((deck) => {
-      if (q !== '' && !`${deck.name} ${deck.description ?? ''}`.toLowerCase()
-        .includes(q.toLowerCase())) return false
+      if (!matchesQuery(`${deck.name} ${deck.description ?? ''}`, q)) return false
       if (applied.kind !== null && deck.kind !== applied.kind) return false
       if (applied.size === 'small' && deck.cardCount > 40) return false
       if (applied.size === 'medium' && (deck.cardCount <= 40 || deck.cardCount > 54)) return false

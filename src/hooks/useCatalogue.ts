@@ -1,7 +1,14 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { Deck, Game, Locale } from '@/types/cards'
-import { fetchDeck, fetchDecks, fetchGame, fetchGames } from '@/lib/catalogue'
+import {
+  fetchDeck,
+  fetchDecks,
+  fetchGame,
+  fetchGames,
+  fetchMyUnpublishedGames,
+  type MyGame,
+} from '@/lib/catalogue'
 
 /** The reader's language, narrowed to what the content supports. */
 export function useLocale(): Locale {
@@ -23,6 +30,18 @@ export function useGame(slug: string | undefined): UseQueryResult<Game | null> {
     queryKey: ['game', slug, locale],
     queryFn: () => fetchGame(slug as string, locale),
     enabled: slug !== undefined,
+  })
+}
+
+/** Drafts and submissions of your own, so a game in the queue is still yours. */
+export function useMyUnpublishedGames(
+  authorId: string | undefined,
+): UseQueryResult<MyGame[]> {
+  const locale = useLocale()
+  return useQuery({
+    queryKey: ['my-unpublished-games', authorId, locale],
+    queryFn: () => fetchMyUnpublishedGames(locale, authorId as string),
+    enabled: authorId !== undefined,
   })
 }
 

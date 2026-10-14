@@ -12,6 +12,7 @@ dist-ssr/
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 # supabase
 supabase/.branches/
@@ -39,3 +40,4 @@ npm-debug.log*
 # python bytecode
 __pycache__/
 *.pyc
+.vercel

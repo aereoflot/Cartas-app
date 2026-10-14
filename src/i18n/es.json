@@ -57,7 +57,12 @@
     "other": "Otros",
     "filtersApplied_one": "{{count}} filtro aplicado",
     "filtersApplied_other": "{{count}} filtros aplicados",
-    "noDecksOwned": "Todavía no has marcado ningún mazo como tuyo. Ve a Mazos y pulsa “Lo tengo”."
+    "noDecksOwned": "Todavía no has marcado ningún mazo como tuyo. Ve a Mazos y pulsa “Lo tengo”.",
+    "mineUnpublished": "Tuyos, sin publicar",
+    "createAny": "¿Falta un juego?",
+    "createAnyBody": "Añádelo tú. Puedes guardarlo en privado o enviarlo a revisión.",
+    "createNamed": "Crear «{{name}}»",
+    "createNamedBody": "No está en el catálogo. Escríbelo y, mientras se revisa, puedes usarlo tú."
   },
   "game": {
     "needs": "Qué necesitas",
@@ -129,6 +134,25 @@
     "accept": "Lo entiendo",
     "back": "Volver"
   },
+  "install": {
+    "title": "Instala Cartas en tu móvil",
+    "body": "Se abre como una app, arranca más rápido y las reglas siguen ahí sin cobertura.",
+    "cta": "Instalar la app",
+    "ios1": "Toca Compartir en la barra de Safari.",
+    "ios2": "Elige «Añadir a pantalla de inicio».",
+    "manual1": "Abre el menú de tu navegador.",
+    "manual2": "Elige «Instalar app» o «Añadir a pantalla de inicio».",
+    "accountTitle": "¿Con cuenta o como invitado?",
+    "accountBody": "Con cuenta, tus favoritos y tus partidas te siguen a cualquier móvil. Como invitado se quedan solo en este, y puedes crear la cuenta cuando quieras.",
+    "createAccount": "Crear cuenta",
+    "guest": "Seguir como invitado",
+    "later": "Ahora no",
+    "notWorking": "¿No te funciona?",
+    "howTo": "Ver cómo se instala",
+    "profileTitle": "Instalar la app",
+    "profileBody": "Si antes dijiste que no, aquí la tienes cuando quieras.",
+    "installed": "Instalada. Ábrela desde tu pantalla de inicio."
+  },
   "deck": {
     "cards_one": "{{count}} carta",
     "cards_other": "{{count}} cartas",
@@ -177,7 +201,34 @@
     "deleteConfirm": "¿Seguro? Se borra tu cuenta y todo lo tuyo: favoritos, mazos, carpetas, grupos, partidas y mensajes. No se puede deshacer.",
     "deleteKeeps": "Los juegos que hayas publicado se quedan en el catálogo, sin tu nombre.",
     "deleting": "Borrando…",
-    "privacy": "Privacidad"
+    "privacy": "Privacidad",
+    "problem": {
+      "rateLimit": "Has pedido demasiados enlaces en poco tiempo. Espera unos minutos y vuelve a intentarlo: el correo anterior sigue siendo válido.",
+      "invalidEmail": "Ese correo no parece válido. Revísalo y vuelve a intentarlo.",
+      "offline": "No hay conexión. Comprueba tus datos o el wifi y vuelve a intentarlo.",
+      "unknown": "No se ha podido enviar el enlace."
+    },
+    "bodyPassword": "Entra con tu correo y tu contraseña.",
+    "signUpTitle": "Crear cuenta",
+    "signUpBody": "Elige un usuario, pon tu correo y una contraseña. No hay nada que verificar.",
+    "signUpAction": "Crear cuenta",
+    "password": "Contraseña",
+    "passwordAgain": "Repite la contraseña",
+    "passwordMismatch": "Las dos contraseñas no coinciden.",
+    "password_short": "Mínimo {{min}} caracteres.",
+    "password_common": "Esa contraseña es de las primeras que alguien probaría. Elige otra.",
+    "show": "Ver",
+    "hide": "Ocultar",
+    "working": "Un momento…",
+    "checking": "Comprobando…",
+    "handleFree": "Libre, es tuyo.",
+    "handleTaken": "Ya hay alguien con ese usuario.",
+    "needAccount": "¿No tienes cuenta? Créala",
+    "haveAccount": "¿Ya tienes cuenta? Entra",
+    "noVerification": "No te mandamos ningún correo y no hay nada que verificar: al crear la cuenta entras directo. El correo solo sirve para entrar, y para poder recuperar la contraseña el día que haga falta.",
+    "emailShape": "Escribe el correo completo, con @ y dominio.",
+    "handleNote": "Así te verán y te buscarán tus amigos. No se puede cambiar después.",
+    "emailNote": "Tu correo no se publica ni aparece en tu perfil."
   },
   "friends": {
     "list": "Tus amigos",
@@ -270,7 +321,13 @@
       "published": "publicado",
       "rejected": "rechazado",
       "archived": "archivado"
-    }
+    },
+    "usernameFixed": "Es tu usuario para entrar, así que no se cambia. El nombre que ve la gente sí.",
+    "passwordTitle": "Contraseña",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Contraseña nueva",
+    "changePassword": "Cambiar la contraseña",
+    "passwordChanged": "Contraseña cambiada."
   },
   "sync": {
     "failed": "Tus favoritos y carpetas no se han podido guardar en tu cuenta. Siguen en este móvil; se reintenta al próximo cambio."
@@ -338,7 +395,25 @@
       "duration": "La duración máxima no puede ser menor que la mínima.",
       "sections": "Faltan Objetivo, Preparación o Desarrollo: sin esas tres no se puede jugar.",
       "originalWording": "Marca la casilla de que el texto es tuyo."
-    }
+    },
+    "twoWays": "Guardar en privado solo pide el título: deja las casillas que quieras sin rellenar y sigue otro día. Enviar a revisión pide los mínimos de arriba, y mientras se revisa el juego sigue siendo tuyo: lo encuentras en el buscador y puedes jugar con él.",
+    "stepVisibility": "¿Para ti o para todos?",
+    "privateOption": "Solo para mí",
+    "privateOptionBody": "Rápido: con el nombre basta. Deja lo que quieras sin rellenar y termínalo otro día. No lo ve nadie más.",
+    "publicOption": "Para todos",
+    "publicOptionBody": "Hay que rellenar lo mínimo para que se entienda. Lo reviso antes de que salga, y mientras tanto puedes usarlo tú.",
+    "stepBasics": "Nombre y de qué va",
+    "stepPlayers": "Jugadores",
+    "stepDecks": "Con qué se juega",
+    "stepDetails": "Detalles (opcional)",
+    "stepRules": "Las reglas",
+    "stepSave": "Guardar",
+    "stepSend": "Revisar y enviar",
+    "stepMissing": "falta algo",
+    "next": "Siguiente",
+    "savePrivate": "Guardar solo para mí",
+    "privateNote": "Se guarda solo para ti. Lo encontrarás en tu buscador y en tu perfil, y puedes hacerlo público cuando quieras.",
+    "publicNote": "Al enviarlo entra en la cola de revisión. Mientras espera sigue siendo tuyo: lo encuentras en tu buscador y puedes jugar con él."
   },
   "ai": {
     "intro": "Un experto en juegos de cartas que te lo explica de otra forma, hace de árbitro con las reglas delante, o te dice a qué jugar.",

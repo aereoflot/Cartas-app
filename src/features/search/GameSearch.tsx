@@ -1,14 +1,17 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { GameCard } from '@/components/GameCard'
 import { SearchBox } from '@/components/SearchBox'
 import { Collapsible } from '@/components/Collapsible'
 import { FilterChip } from '@/components/FilterChip'
 import { Loading, LoadFailed } from '@/components/QueryState'
-import { useDecks, useGames } from '@/hooks/useCatalogue'
+import { SectionTitle } from '@/components/SectionTitle'
+import { useDecks, useGames, useMyUnpublishedGames } from '@/hooks/useCatalogue'
 import { useFavoriteGames, useHideAdult, useOwnedDecks } from '@/hooks/usePrefs'
+import { useSession } from '@/hooks/useSession'
 import { favouritesFirst } from '@/lib/prefs'
+import { matchesQuery } from '@/lib/search'
 
 /**
  * The searcher. Tapping the box opens the list straight away — you should not
@@ -76,6 +79,8 @@ export function GameSearch({ variant }: { variant: 'home' | 'full' }) {
   const favorites = useFavoriteGames()
   const owned = useOwnedDecks()
   const hideAdult = useHideAdult()
+  const { session } = useSession()
+  const mineQuery = useMyUnpublishedGames(session?.user.id)
 
   const q = params.get('q') ?? ''
   const applied = useMemo(() => fromParams(params), [params])
@@ -115,8 +120,7 @@ export function GameSearch({ variant }: { variant: 'home' | 'full' }) {
 
   const results = useMemo(() => {
     const matched = (games ?? []).filter((g) => {
-      if (q !== '' && !`${g.title} ${g.tagline ?? ''} ${g.summary}`.toLowerCase()
-        .includes(q.toLowerCase())) return false
+      if (!matchesQuery(`${g.title} ${g.tagline ?? ''} ${g.summary}`, q)) return false
       if (applied.players !== null
         && (applied.players < g.playersMin || applied.players > g.playersMax)) return false
       if (applied.decks !== null && g.deckCountTotal > applied.decks) return false
@@ -135,7 +139,21 @@ export function GameSearch({ variant }: { variant: 'home' | 'full' }) {
     return favouritesFirst(matched, (g) => g.slug, favorites)
   }, [games, favorites, owned, hideAdult, q, applied])
 
+  /**
+   * Your own drafts and submissions, matched the same way. Sending a game for
+   * review does not take it away from you: it stays findable here, labelled, so
+   * you can play from it while it waits.
+   */
+  const mine = useMemo(
+    () =>
+      (mineQuery.data ?? []).filter(({ game }) =>
+        matchesQuery(`${game.title} ${game.tagline ?? ''} ${game.summary}`, q),
+      ),
+    [mineQuery.data, q],
+  )
+
   const showResults = opened || q !== '' || appliedCount > 0
+  const createHref = q === '' ? '/games/new' : `/games/new?title=${encodeURIComponent(q)}`
 
   return (
     <div>
@@ -300,16 +318,47 @@ export function GameSearch({ variant }: { variant: 'home' | 'full' }) {
       {error === null && showResults && (
         isPending ? (
           <Loading />
-        ) : results.length === 0 ? (
-          <p className="mt-4 rounded-card border border-dashed border-line px-3 py-6 text-center text-sm text-muted">
-            {t('search.empty')}
-          </p>
         ) : (
-          <div className="mt-4 space-y-2">
-            {results.map((g) => (
-              <GameCard key={g.slug} game={g} />
-            ))}
-          </div>
+          <>
+            {results.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {results.map((g) => (
+                  <GameCard key={g.slug} game={g} />
+                ))}
+              </div>
+            )}
+
+            {mine.length > 0 && (
+              <section className="mt-5">
+                <SectionTitle>{t('search.mineUnpublished')}</SectionTitle>
+                <div className="space-y-2">
+                  {mine.map(({ game, status }) => (
+                    <GameCard key={game.slug} game={game} status={status} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* A filter that excludes everything is not an invitation to write a
+                game, so that case keeps its own message. A name nobody has is. */}
+            {results.length === 0 && mine.length === 0 && q === '' && (
+              <p className="mt-4 rounded-card border border-dashed border-line px-3 py-6 text-center text-sm text-muted">
+                {t('search.empty')}
+              </p>
+            )}
+
+            <Link
+              to={createHref}
+              className="mt-4 block rounded-card border border-dashed border-accent/50 bg-accent-soft/50 px-4 py-4 text-center"
+            >
+              <span className="block font-semibold text-accent">
+                {q === '' ? t('search.createAny') : t('search.createNamed', { name: q })}
+              </span>
+              <span className="mt-1 block text-xs leading-relaxed text-muted">
+                {q === '' ? t('search.createAnyBody') : t('search.createNamedBody')}
+              </span>
+            </Link>
+          </>
         )
       )}
     </div>

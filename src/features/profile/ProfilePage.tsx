@@ -9,16 +9,13 @@ import { setHideAdult } from '@/lib/prefs'
 import { fetchMyProfile, updateMyProfile } from '@/lib/profile'
 import { listMyGames } from '@/lib/gameWrite'
 import { deleteMyAccount, signOut } from '@/lib/auth'
-import {
-  checkUsername,
-  normalizeUsername,
-  USERNAME_MAX,
-  USERNAME_MIN,
-} from '@/lib/username'
+import { changePassword, checkPassword, PASSWORD_MIN } from '@/lib/account'
+import { SignInError } from '@/lib/auth'
 import { Loading } from '@/components/QueryState'
 import { Chip } from '@/components/Chip'
 import { SectionTitle } from '@/components/SectionTitle'
 import { SignInRequired } from '@/components/SignInRequired'
+import { InstallSection } from '@/components/InstallSection'
 import { fieldClass } from '@/components/field'
 
 export function ProfilePage() {
@@ -33,7 +30,6 @@ export function ProfilePage() {
     enabled: userId !== undefined,
   })
 
-  const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [status, setStatus] = useState<'idle' | 'saved' | 'taken' | 'invalid'>('idle')
   const sync = useSyncState()
@@ -62,18 +58,12 @@ export function ProfilePage() {
 
   // fill the form once the profile arrives, and only then
   useEffect(() => {
-    if (profile !== null && profile !== undefined) {
-      setUsername(profile.username)
-      setDisplayName(profile.displayName)
-    }
+    if (profile !== null && profile !== undefined) setDisplayName(profile.displayName)
   }, [profile])
 
   const save = useMutation({
     mutationFn: () =>
-      updateMyProfile(userId as string, {
-        username: normalizeUsername(username),
-        displayName: displayName.trim(),
-      }),
+      updateMyProfile(userId as string, { displayName: displayName.trim() }),
     onSuccess: (result) => {
       setStatus(result === 'saved' ? 'saved' : result)
       if (result === 'saved') {
@@ -85,14 +75,18 @@ export function ProfilePage() {
   if (pending) return <Loading />
 
   if (session === null) {
-    return <SignInRequired title={t('nav.profile')} />
+    return (
+      <>
+        <SignInRequired title={t('nav.profile')} />
+        <div className="px-4 pb-8">
+          <InstallSection />
+        </div>
+      </>
+    )
   }
 
-  const problem = checkUsername(username)
   const changed =
-    profile !== null &&
-    profile !== undefined &&
-    (normalizeUsername(username) !== profile.username || displayName.trim() !== profile.displayName)
+    profile !== null && profile !== undefined && displayName.trim() !== profile.displayName
   const isReviewer = profile?.role === 'owner' || profile?.role === 'moderator'
 
   return (
@@ -128,34 +122,20 @@ export function ProfilePage() {
           />
         </label>
 
-        <label className="block">
+        {/* The handle is what you sign in with, so it is shown rather than
+            edited: renaming it would move the only door you have, and with no
+            email there is no second way through. */}
+        <div>
           <span className="mb-1 block text-sm font-medium">{t('profile.username')}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-muted">@</span>
-            <input
-              value={username}
-              onChange={(event) => {
-                setUsername(event.target.value)
-                setStatus('idle')
-              }}
-              maxLength={USERNAME_MAX}
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              className={`${fieldClass} min-w-0 flex-1`}
-            />
-          </div>
-          <span className="mt-1 block text-xs text-muted">
-            {t('profile.usernameHint', { min: USERNAME_MIN, max: USERNAME_MAX })}
-          </span>
-          {problem !== null && username !== '' && (
-            <span className="mt-1 block text-xs text-danger">{t(`profile.${problem}`, { min: USERNAME_MIN, max: USERNAME_MAX })}</span>
-          )}
-        </label>
+          <p className="rounded-card border border-line bg-surface-2 px-3 py-2.5 text-base">
+            @{profile?.username ?? '…'}
+          </p>
+          <span className="mt-1 block text-xs text-muted">{t('profile.usernameFixed')}</span>
+        </div>
 
         <button
           type="button"
-          disabled={problem !== null || !changed || save.isPending}
+          disabled={!changed || save.isPending}
           onClick={() => save.mutate()}
           className="w-full rounded-full bg-accent px-4 py-2.5 font-semibold text-accent-ink disabled:opacity-50"
         >
@@ -182,6 +162,10 @@ export function ProfilePage() {
           </span>
         </label>
       </section>
+
+      <PasswordSection email={session.user.email} />
+
+      <InstallSection />
 
       {/* Favourites and folders are kept on the device first and pushed to the
           account after; if that push fails, say so instead of letting someone
@@ -282,5 +266,111 @@ export function ProfilePage() {
         )}
       </section>
     </div>
+  )
+}
+
+/**
+ * Changing a password, current one first. Supabase would take the new one on
+ * the session alone; asking for the old one means a borrowed phone cannot be
+ * turned into a permanent takeover, which matters more here than usual because
+ * there is no email to recover a stolen account with.
+ */
+function PasswordSection({ email }: { email: string | undefined }) {
+  const { t } = useTranslation()
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [again, setAgain] = useState('')
+  const [problem, setProblem] = useState<string | null>(null)
+
+  const weak = checkPassword(next)
+  const ready =
+    email !== undefined && current !== '' && weak === null && next !== '' && next === again
+
+  const change = useMutation({
+    mutationFn: () => changePassword(email as string, current, next),
+    onSuccess: () => {
+      setProblem(null)
+      setCurrent('')
+      setNext('')
+      setAgain('')
+    },
+    onError: (error) =>
+      setProblem(error instanceof SignInError ? error.problem : 'unknown'),
+  })
+
+  if (email === undefined) return null
+
+  return (
+    <section className="space-y-3 rounded-card border border-line bg-surface p-4">
+      <h2 className="font-semibold">{t('profile.passwordTitle')}</h2>
+
+      <div className="block">
+        <label htmlFor="pw-current" className="mb-1 block text-sm font-medium">
+          {t('profile.currentPassword')}
+        </label>
+        <input
+          id="pw-current"
+          type="password"
+          value={current}
+          onChange={(event) => setCurrent(event.target.value)}
+          autoComplete="current-password"
+          className={fieldClass}
+        />
+      </div>
+
+      <div className="block">
+        <label htmlFor="pw-new" className="mb-1 block text-sm font-medium">
+          {t('profile.newPassword')}
+        </label>
+        <input
+          id="pw-new"
+          type="password"
+          value={next}
+          onChange={(event) => setNext(event.target.value)}
+          autoComplete="new-password"
+          className={fieldClass}
+        />
+        {next !== '' && weak !== null && (
+          <span className="mt-1 block text-xs text-danger">
+            {t(`auth.password_${weak === 'too-short' ? 'short' : 'common'}`, { min: PASSWORD_MIN })}
+          </span>
+        )}
+      </div>
+
+      <div className="block">
+        <label htmlFor="pw-again" className="mb-1 block text-sm font-medium">
+          {t('auth.passwordAgain')}
+        </label>
+        <input
+          id="pw-again"
+          type="password"
+          value={again}
+          onChange={(event) => setAgain(event.target.value)}
+          autoComplete="new-password"
+          className={fieldClass}
+        />
+        {again !== '' && again !== next && (
+          <span className="mt-1 block text-xs text-danger">{t('auth.passwordMismatch')}</span>
+        )}
+      </div>
+
+      <button
+        type="button"
+        disabled={!ready || change.isPending}
+        onClick={() => change.mutate()}
+        className="w-full rounded-full bg-accent px-4 py-2.5 font-semibold text-accent-ink disabled:opacity-50"
+      >
+        {change.isPending ? t('profile.saving') : t('profile.changePassword')}
+      </button>
+
+      {change.isSuccess && problem === null && (
+        <p className="text-sm text-accent">{t('profile.passwordChanged')}</p>
+      )}
+      {problem !== null && (
+        <p role="alert" className="text-sm text-danger">
+          {t(`auth.problem.${problem}`)}
+        </p>
+      )}
+    </section>
   )
 }

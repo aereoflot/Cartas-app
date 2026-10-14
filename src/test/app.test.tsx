@@ -131,6 +131,43 @@ describe('search route', () => {
   })
 })
 
+describe('buscar sin tildes, y crear lo que falta', () => {
+  it('encuentra un juego escrito sin su tilde', async () => {
+    mount('/search?q=poker')
+    expect(await screen.findByRole('heading', { name: 'Póker Texas hold’em' }))
+      .toBeInTheDocument()
+  })
+
+  it('encuentra el guiñote sin la ñ y la escoba con una errata', async () => {
+    mount('/search?q=guinote')
+    expect(await screen.findByRole('heading', { name: 'Guiñote' })).toBeInTheDocument()
+
+    cleanup()
+    mount('/search?q=chinchn')
+    expect(await screen.findByRole('heading', { name: 'Chinchón' })).toBeInTheDocument()
+  })
+
+  it('ofrece crear el juego al final de la lista, con el nombre ya escrito', async () => {
+    mount('/search?q=poker')
+    await screen.findByRole('heading', { name: 'Póker Texas hold’em' })
+    expect(screen.getByRole('link', { name: /Crear «poker»/ }))
+      .toHaveAttribute('href', '/games/new?title=poker')
+  })
+
+  it('si no hay ninguno con ese nombre, deja solo la opción de crearlo', async () => {
+    mount('/search?q=parchis')
+    expect(await screen.findByRole('link', { name: /Crear «parchis»/ })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument()
+    // the filters message belongs to a different kind of emptiness
+    expect(screen.queryByText('Ningún juego encaja con esos filtros.')).not.toBeInTheDocument()
+  })
+
+  it('un filtro que no deja nada conserva su propio mensaje', async () => {
+    mount('/search?incomplete=1')
+    expect(await screen.findByText('Ningún juego encaja con esos filtros.')).toBeInTheDocument()
+  })
+})
+
 describe('favourites', () => {
   it('stars a game from the results and shows it on the home screen', async () => {
     mount('/search')

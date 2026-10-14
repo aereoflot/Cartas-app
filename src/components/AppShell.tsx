@@ -2,6 +2,7 @@ import { NavLink, Outlet, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
 import { useSync } from '@/hooks/useSync'
+import { InstallInvite } from './InstallInvite'
 import { DeckIcon, FriendsIcon, HomeIcon, SparkleIcon } from './icons'
 
 // No search tab: the searcher is the first thing on the home screen, so a tab
@@ -64,6 +65,10 @@ export function AppShell() {
       <main className="flex-1 pb-24">
         <Outlet />
       </main>
+
+      {/* Not over the sign-in form: somebody already there has answered the
+          question the sheet is about to ask. */}
+      <InstallInvite enabled={pathname !== '/login'} />
 
       <nav className="safe-bottom fixed bottom-0 left-1/2 z-20 w-full max-w-2xl -translate-x-1/2 border-t border-line bg-bg/95 backdrop-blur">
         <ul className="grid grid-cols-4">

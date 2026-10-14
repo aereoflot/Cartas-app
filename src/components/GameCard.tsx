@@ -9,7 +9,11 @@ import { Chip } from './Chip'
 import { FavoriteStar } from './FavoriteStar'
 import { StarIcon } from './icons'
 
-export function GameCard({ game }: { game: Game }) {
+/**
+ * `status` is set only for an author looking at their own unpublished game, so
+ * a draft in a list of published games cannot be mistaken for one.
+ */
+export function GameCard({ game, status }: { game: Game; status?: string }) {
   const { t } = useTranslation()
   const favorites = useFavoriteGames()
   const duration = durationRange(game.durationMin, game.durationMax)
@@ -25,7 +29,14 @@ export function GameCard({ game }: { game: Game }) {
         to={`/games/${game.slug}`}
         className="block rounded-card border border-line bg-surface p-4 pr-12 transition-colors hover:border-accent/40"
       >
-        <h3 className="truncate font-semibold">{game.title}</h3>
+        <div className="flex items-baseline gap-2">
+          <h3 className="truncate font-semibold">{game.title}</h3>
+          {status !== undefined && (
+            <Chip tone={status === 'rejected' ? 'danger' : 'accent'}>
+              {t(`profile.gameStatus.${status}`)}
+            </Chip>
+          )}
+        </div>
         {game.tagline !== undefined && (
           <p className="mt-0.5 line-clamp-2 text-sm text-muted">{game.tagline}</p>
         )}

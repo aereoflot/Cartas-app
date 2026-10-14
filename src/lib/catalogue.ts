@@ -173,3 +173,39 @@ export async function fetchPendingGames(locale: Locale): Promise<Game[]> {
     .map((row) => mapGame(row, locale))
     .filter((game): game is Game => game !== null)
 }
+
+export interface MyGame {
+  game: Game
+  status: string
+}
+
+/**
+ * The author's own games that are not published yet: drafts and anything
+ * waiting for review. The point is that submitting a game does not take it away
+ * from you — you can read it, and play from it, while it sits in the queue.
+ *
+ * `games_read` already allows `author_id = auth.uid()`, so this needs no
+ * special privilege; it is the same catalogue, asked a different question.
+ */
+export async function fetchMyUnpublishedGames(
+  locale: Locale,
+  authorId: string,
+): Promise<MyGame[]> {
+  if (supabase === null) return []
+
+  const { data, error } = await supabase
+    .from('games')
+    .select(`status, ${GAME_COLUMNS}`)
+    .eq('author_id', authorId)
+    .neq('status', 'published')
+    .order('updated_at', { ascending: false })
+
+  if (error !== null) throw new Error(error.message)
+
+  return (data as unknown as Array<GameRow & { status: string }>)
+    .map((row) => {
+      const game = mapGame(row, locale)
+      return game === null ? null : { game, status: row.status }
+    })
+    .filter((mine): mine is MyGame => mine !== null)
+}
