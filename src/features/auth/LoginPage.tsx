@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { SignInError } from '@/lib/auth'
@@ -7,14 +7,16 @@ import {
   checkPassword,
   isUsernameFree,
   looksLikeEmail,
+  requestPasswordReset,
   signIn,
   signUp,
 } from '@/lib/account'
+import { ADULT_AGE, checkBirthdate, MIN_AGE } from '@/lib/age'
 import { checkUsername, normalizeUsername, USERNAME_MAX } from '@/lib/username'
 import { isSupabaseConfigured } from '@/lib/supabase'
 import { fieldClass } from '@/components/field'
 
-type Mode = 'in' | 'up'
+type Mode = 'in' | 'up' | 'forgot'
 type Status = { kind: 'idle' } | { kind: 'busy' } | { kind: 'error'; problem: string; detail: string }
 type Taken = 'unknown' | 'checking' | 'free' | 'taken'
 
@@ -34,14 +36,21 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [again, setAgain] = useState('')
+  const [birthdate, setBirthdate] = useState('')
   const [reveal, setReveal] = useState(false)
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
+  const [sent, setSent] = useState(false)
   const [taken, setTaken] = useState<Taken>('unknown')
 
   const handle = normalizeUsername(username)
   const badHandle = checkUsername(username)
   const badPassword = checkPassword(password)
   const emailOk = looksLikeEmail(email)
+  // one `now` for the life of the screen: a date that moves mid-form would
+  // make the same typed birthday valid and then not
+  const today = useMemo(() => new Date(), [])
+  const badBirthdate = checkBirthdate(birthdate, today)
+  const latest = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 
   // Ask whether the handle is free while they type, not after they have chosen
   // a password. Debounced, and every answer is checked against what is in the
@@ -73,15 +82,27 @@ export function LoginPage() {
     emailOk &&
     (mode === 'in'
       ? password !== ''
-      : badHandle === null && badPassword === null && password === again && taken !== 'taken')
+      : mode === 'forgot'
+        ? true
+        : badHandle === null &&
+          badPassword === null &&
+          badBirthdate === null &&
+          password === again &&
+          taken !== 'taken')
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!ready || status.kind === 'busy') return
     setStatus({ kind: 'busy' })
     try {
+      if (mode === 'forgot') {
+        await requestPasswordReset(email)
+        setSent(true)
+        setStatus({ kind: 'idle' })
+        return
+      }
       if (mode === 'in') await signIn(email, password)
-      else await signUp(handle, email, password)
+      else await signUp(handle, email, password, birthdate)
       void navigate('/me')
     } catch (error) {
       setStatus({
@@ -105,9 +126,19 @@ export function LoginPage() {
 
   return (
     <div className="px-4 py-8">
-      <h1 className="text-xl font-bold">{mode === 'in' ? t('auth.title') : t('auth.signUpTitle')}</h1>
+      <h1 className="text-xl font-bold">
+        {mode === 'in'
+          ? t('auth.title')
+          : mode === 'forgot'
+            ? t('auth.forgotTitle')
+            : t('auth.signUpTitle')}
+      </h1>
       <p className="mt-1 text-sm text-muted">
-        {mode === 'in' ? t('auth.bodyPassword') : t('auth.signUpBody')}
+        {mode === 'in'
+          ? t('auth.bodyPassword')
+          : mode === 'forgot'
+            ? t('auth.forgotBody')
+            : t('auth.signUpBody')}
       </p>
 
       <form onSubmit={(event) => void submit(event)} className="mt-5 space-y-3">
@@ -182,6 +213,38 @@ export function LoginPage() {
           )}
         </div>
 
+        {/* Asked once, and it keeps answering: the day somebody turns eighteen
+            the adult games appear with nobody to ask and nothing to change.
+            That is why it is a date and not the checkbox it replaces. */}
+        {mode === 'up' && (
+          <div className="block">
+            <label htmlFor="login-birthdate" className="mb-1 block text-sm font-medium">
+              {t('auth.birthdate')}
+            </label>
+            <input
+              id="login-birthdate"
+              type="date"
+              value={birthdate}
+              max={latest}
+              onChange={(event) => {
+                setBirthdate(event.target.value)
+                setStatus({ kind: 'idle' })
+              }}
+              autoComplete="bday"
+              className={fieldClass}
+            />
+            {birthdate !== '' && badBirthdate !== null && badBirthdate !== 'empty' && (
+              <span className="mt-1 block text-xs text-danger">
+                {t(`auth.birthdate_${badBirthdate}`, { min: MIN_AGE })}
+              </span>
+            )}
+            <span className="mt-1 block text-xs leading-relaxed text-muted">
+              {t('auth.birthdateNote', { adult: ADULT_AGE })}
+            </span>
+          </div>
+        )}
+
+        {mode !== 'forgot' && (
         <div className="block">
           <label htmlFor="login-password" className="mb-1 block text-sm font-medium">
             {t('auth.password')}
@@ -215,7 +278,23 @@ export function LoginPage() {
               })}
             </span>
           )}
+          {/* The way out of a lost password, where somebody looking for it
+              actually is: under the box they cannot fill in. */}
+          {mode === 'in' && (
+            <button
+              type="button"
+              onClick={() => {
+                setMode('forgot')
+                setStatus({ kind: 'idle' })
+                setSent(false)
+              }}
+              className="mt-2 text-xs font-medium text-accent"
+            >
+              {t('auth.forgotLink')}
+            </button>
+          )}
         </div>
+        )}
 
         {mode === 'up' && (
           <div className="block">
@@ -242,6 +321,12 @@ export function LoginPage() {
           </p>
         )}
 
+        {mode === 'forgot' && (
+          <p className="rounded-card border border-line bg-surface-2 px-3 py-2.5 text-xs leading-relaxed text-muted">
+            {t('auth.forgotWarning')}
+          </p>
+        )}
+
         <button
           type="submit"
           disabled={!ready || status.kind === 'busy'}
@@ -251,8 +336,18 @@ export function LoginPage() {
             ? t('auth.working')
             : mode === 'in'
               ? t('auth.signIn')
-              : t('auth.signUpAction')}
+              : mode === 'forgot'
+                ? t('auth.forgotAction')
+                : t('auth.signUpAction')}
         </button>
+
+        {/* Said the same way whether or not that address has an account:
+            anything else answers "is this person registered here?" */}
+        {sent && (
+          <p className="rounded-card border border-accent/40 bg-accent-soft px-3 py-2.5 text-sm">
+            {t('auth.forgotSent')}
+          </p>
+        )}
 
         {status.kind === 'error' && (
           <div role="alert" className="rounded-card border border-danger/40 px-3 py-2.5">
@@ -267,11 +362,16 @@ export function LoginPage() {
         onClick={() => {
           setMode(mode === 'in' ? 'up' : 'in')
           setStatus({ kind: 'idle' })
+          setSent(false)
           setAgain('')
         }}
         className="mt-5 w-full text-center text-sm font-medium text-accent"
       >
-        {mode === 'in' ? t('auth.needAccount') : t('auth.haveAccount')}
+        {mode === 'in'
+          ? t('auth.needAccount')
+          : mode === 'forgot'
+            ? t('auth.backToSignIn')
+            : t('auth.haveAccount')}
       </button>
 
       <p className="mt-6 text-xs text-muted">

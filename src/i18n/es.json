@@ -27,7 +27,12 @@
     "sampleData": "Datos de muestra",
     "sampleDataBody": "No hay Supabase configurado, así que ves un catálogo de ejemplo. Copia .env.example a .env.local para conectarlo.",
     "loading": "Cargando…",
-    "loadFailed": "No se ha podido cargar el catálogo."
+    "loadFailed": "No se ha podido cargar el catálogo.",
+    "close": "Cerrar",
+    "language": {
+      "es": "español",
+      "en": "inglés"
+    }
   },
   "home": {
     "resume": "Reanudar partida",
@@ -84,7 +89,8 @@
     "variants": "Variantes",
     "comments": "Comentarios",
     "adult": "+18",
-    "byAuthor": "por {{name}}"
+    "byAuthor": "por {{name}}",
+    "onlyInLocale": "Estas reglas están escritas en {{language}} y todavía no hay traducción. Se muestran tal cual para que no te falte nada; cuando haya versión en tu idioma, aparecerá aquí."
   },
   "match": {
     "startTitle": "Empezar partida",
@@ -181,14 +187,8 @@
   },
   "auth": {
     "title": "Entrar",
-    "body": "Escribe tu correo y te mandamos un enlace para entrar. Sin contraseñas.",
+    "body": "Entra con tu correo y tu contraseña, o crea una cuenta en un minuto.",
     "email": "Correo",
-    "send": "Mandarme el enlace",
-    "sending": "Enviando…",
-    "sentTitle": "Mira tu correo",
-    "sentBody": "Te hemos mandado un enlace a {{email}}. Ábrelo en este mismo dispositivo y entrarás directo.",
-    "useAnother": "Usar otro correo",
-    "noPassword": "No guardamos contraseñas: cada vez que entres, un enlace nuevo.",
     "notConfigured": "Todavía no hay base de datos conectada, así que no se puede entrar. Es el siguiente paso del proyecto.",
     "signIn": "Entrar",
     "signOut": "Salir",
@@ -203,14 +203,17 @@
     "deleting": "Borrando…",
     "privacy": "Privacidad",
     "problem": {
-      "rateLimit": "Has pedido demasiados enlaces en poco tiempo. Espera unos minutos y vuelve a intentarlo: el correo anterior sigue siendo válido.",
-      "invalidEmail": "Ese correo no parece válido. Revísalo y vuelve a intentarlo.",
-      "offline": "No se ha podido contactar con el servidor. Puede ser tu conexión, un bloqueador del navegador, o que el servidor no esté respondiendo.",
-      "unknown": "No se ha podido enviar el enlace."
+      "rateLimit": "Demasiados intentos seguidos. Espera un rato y vuelve a probar.",
+      "invalidEmail": "Ese correo no tiene buena pinta. Mira que esté bien escrito.",
+      "offline": "No se ha podido contactar con el servidor. Mira tu conexión y vuelve a probar.",
+      "wrongLogin": "El correo o la contraseña no son correctos.",
+      "usernameTaken": "Ya hay una cuenta con ese correo. Entra en vez de crearla.",
+      "weakPassword": "Esa contraseña es demasiado corta o demasiado fácil. Elige otra.",
+      "unknown": "No ha salido bien. Si vuelve a pasar, mándame los detalles."
     },
     "bodyPassword": "Entra con tu correo y tu contraseña.",
     "signUpTitle": "Crear cuenta",
-    "signUpBody": "Elige un usuario, pon tu correo y una contraseña. No hay nada que verificar.",
+    "signUpBody": "Elige un usuario, pon tu correo, tu fecha de nacimiento y una contraseña. No hay nada que verificar.",
     "signUpAction": "Crear cuenta",
     "password": "Contraseña",
     "passwordAgain": "Repite la contraseña",
@@ -227,8 +230,25 @@
     "haveAccount": "¿Ya tienes cuenta? Entra",
     "noVerification": "No te mandamos ningún correo y no hay nada que verificar: al crear la cuenta entras directo. El correo solo sirve para entrar, y para poder recuperar la contraseña el día que haga falta.",
     "emailShape": "Escribe el correo completo, con @ y dominio.",
-    "handleNote": "Así te verán y te buscarán tus amigos. No se puede cambiar después.",
-    "emailNote": "Tu correo no se publica ni aparece en tu perfil."
+    "handleNote": "Así te verán y te buscarán tus amigos. Puedes cambiarlo luego en tu perfil.",
+    "emailNote": "Tu correo no se publica ni aparece en tu perfil.",
+    "birthdate": "Fecha de nacimiento",
+    "birthdateNote": "Te la pedimos una vez, y solo para saber si puedes ver los juegos de adultos. No se publica, no la ve nadie más, y en cuanto cumplas los {{adult}} se desbloquean solos.",
+    "birthdate_shape": "Esa fecha no se entiende. Usa el calendario.",
+    "birthdate_future": "Esa fecha es del futuro.",
+    "birthdate_tooYoung": "Hay que tener al menos {{min}} años para hacerse una cuenta.",
+    "birthdate_tooOld": "Esa fecha es demasiado antigua. Revísala.",
+    "forgotTitle": "He olvidado la contraseña",
+    "forgotBody": "Escribe tu correo y te mandamos un enlace para poner una nueva.",
+    "forgotLink": "¿Has olvidado la contraseña?",
+    "forgotAction": "Mandarme el enlace",
+    "forgotSent": "Si esa dirección tiene cuenta, el enlace ya va de camino. Mira también la carpeta de spam.",
+    "forgotWarning": "El enlace se abre en el navegador que elija tu aplicación de correo, que puede no ser este. Si te pasa, vuelve aquí y entra con la contraseña nueva.",
+    "backToSignIn": "Volver a entrar con mi contraseña",
+    "newPasswordTitle": "Poner una contraseña nueva",
+    "newPasswordBody": "Elígela y ya está. No hace falta la antigua.",
+    "newPasswordAction": "Guardar la contraseña",
+    "newPasswordNoLink": "Este enlace ya no vale: o se ha usado, o ha caducado, o se abrió en otro navegador. Pide otro desde la pantalla de entrar."
   },
   "friends": {
     "list": "Tus amigos",
@@ -309,9 +329,6 @@
     "too-short": "Demasiado corto: mínimo {{min}} caracteres.",
     "too-long": "Demasiado largo: máximo 24 caracteres.",
     "bad-characters": "Solo minúsculas sin acentos, números y guion bajo (nada de ñ, tildes ni espacios).",
-    "settings": "Ajustes",
-    "hideAdult": "Esconder los juegos +18",
-    "hideAdultHint": "Los quita de la búsqueda y de las listas. Es tuyo y privado: nadie más puede leerlo.",
     "myGames": "Mis juegos",
     "newGame": "Publicar uno",
     "noGames": "Todavía no has publicado ningún juego. Si jugáis a algo que no está aquí, escríbelo.",
@@ -322,15 +339,34 @@
       "rejected": "rechazado",
       "archived": "archivado"
     },
-    "usernameFixed": "Es tu usuario para entrar, así que no se cambia. El nombre que ve la gente sí.",
     "passwordTitle": "Contraseña",
     "currentPassword": "Contraseña actual",
     "newPassword": "Contraseña nueva",
     "changePassword": "Cambiar la contraseña",
-    "passwordChanged": "Contraseña cambiada."
+    "passwordChanged": "Contraseña cambiada.",
+    "accountSection": "Cuenta",
+    "playSection": "Partidas y amigos",
+    "appSection": "La app en tu móvil",
+    "dataSection": "Privacidad y tus datos",
+    "waitingCount": "{{count}} en revisión",
+    "emailNote": "Es con lo que entras y lo único con lo que se puede recuperar la contraseña. No se publica.",
+    "gameStatusNote": {
+      "draft": "Guardado solo para ti. Lo tienes en tu buscador y puedes jugar con él.",
+      "pending_review": "Lo estoy revisando. Mientras espera sigue siendo tuyo: lo encuentras en tu buscador y puedes jugar con él. No tienes que hacer nada.",
+      "published": "Publicado: cualquiera puede encontrarlo y jugar con él.",
+      "rejected": "No ha salido. Abajo está el motivo: arréglalo y vuelve a enviarlo.",
+      "archived": "Archivado. Ya no aparece en el buscador."
+    },
+    "birthdateNote": "Con esto decidimos si ves los juegos de adultos. Se pide una vez y no se cambia."
   },
   "sync": {
-    "failed": "Tus favoritos y carpetas no se han podido guardar en tu cuenta. Siguen en este móvil; se reintenta al próximo cambio."
+    "failedWhat": {
+      "collections": "Tus favoritos y carpetas no se han guardado en tu cuenta.",
+      "matches": "Tu historial de partidas no se ha guardado en tu cuenta.",
+      "both": "No se ha podido guardar nada en tu cuenta."
+    },
+    "failedBody": "No se ha perdido nada: sigue en este dispositivo y se reintenta en cuanto cambies algo. Si no se arregla, mira los detalles.",
+    "offline": "Sin conexión. Puedes seguir usando la app con normalidad —favoritos, carpetas, partidas— pero los cambios no se guardan en tu cuenta hasta que vuelva la señal. Nada se pierde."
   },
   "review": {
     "title": "Juegos por revisar",
@@ -342,20 +378,29 @@
     "reasonLabel": "Motivo del rechazo",
     "reasonPlaceholder": "Qué habría que arreglar para que se publique…",
     "reasonHint": "El autor lo verá tal cual, y queda registrado. Sin motivo no se puede rechazar.",
-    "confirmReject": "Rechazar con este motivo"
+    "confirmReject": "Rechazar con este motivo",
+    "waiting": "Esperando revisión",
+    "reports": "Reportes de la gente",
+    "noReports": "Ningún reporte abierto.",
+    "reportBy": "Lo ha reportado @{{name}}",
+    "reportByGone": "Quien lo reportó ya no tiene cuenta",
+    "reportGameGone": "El juego ya no existe",
+    "reportFixed": "Arreglado",
+    "reportNothing": "No hay nada que arreglar",
+    "takeDown": "Quitar el juego de la app",
+    "takeDownPlaceholder": "Por ejemplo: el texto está copiado de una web.",
+    "takeDownHint": "Deja de verse para todo el mundo. El autor conserva su copia y lee este motivo en su perfil. Es lo único que deshace una publicación.",
+    "confirmTakeDown": "Quitarlo de la app",
+    "actionFailed": "No se ha podido hacer. Vuelve a intentarlo."
   },
   "editor": {
     "title": "Publicar un juego",
     "editing": "Editar el juego",
-    "intro": "Primero la ficha, que es lo rápido y lo que hace que te encuentren. Después las reglas.",
+    "intro": "Cinco preguntas. Puedes guardarlo a medias y seguir otro día.",
     "needsAccount": "Entra con tu correo para poder publicar un juego.",
-    "theSpec": "La ficha",
-    "theRules": "Las reglas",
     "gameTitle": "Nombre del juego",
-    "tagline": "Una línea que lo resuma",
-    "taglineHint": "Opcional. Lo que se lee debajo del nombre en la lista.",
     "summary": "Resumen",
-    "summaryHint": "Dos o tres frases: de qué va y por qué merece la pena.",
+    "summaryHint": "Una o dos frases: de qué va. Es lo que se lee debajo del nombre en la lista.",
     "playersMin": "Mínimo",
     "playersMax": "Máximo",
     "playersBest": "Mejor con",
@@ -374,46 +419,76 @@
     "durationMax": "Duración máxima (min)",
     "ageMin": "Edad mínima",
     "extras": "Qué más hace falta",
-    "mechanics": "Etiquetas",
     "listHint": "Separado por comas.",
-    "rulesHint": "Las tres con asterisco son obligatorias. Las demás, si aportan algo.",
-    "sectionsLeft": "Te quedan por escribir: {{list}}",
     "originalWording": "Estas reglas las he escrito yo y no he copiado el texto de otra web ni de un libro.",
     "copyrightNote": "Las reglas de un juego no son de nadie: puedes explicar el mus libremente. El texto con el que alguien las explicó, sí es suyo. Escríbelo con tus palabras.",
     "adultOnly": "Este juego es para adultos (alcohol, dinero o temas de adultos).",
-    "republishWarning": "Este juego ya está publicado. Al enviarlo vuelve a la cola de revisión y deja de verse hasta que se apruebe otra vez.",
+    "republishWarning": "Este juego ya está publicado. Al enviarlo, los cambios entran en la cola de revisión y la versión que ya está aprobada sigue viéndose mientras tanto: nadie se queda sin el juego porque lo estés editando.",
     "saveDraft": "Guardar borrador",
     "submit": "Enviar a revisión",
     "saved": "Guardado.",
     "problem": {
-      "title": "Ponle un nombre al juego.",
-      "summary": "El resumen necesita al menos una frase (diez caracteres).",
-      "players": "El número de jugadores no cuadra: el máximo no puede ser menor que el mínimo.",
+      "title": "El nombre tiene que tener entre 2 y 120 caracteres.",
+      "summary": "El resumen necesita entre 10 y 600 caracteres. Con una frase basta.",
+      "players": "Los jugadores van de 1 a 64, y el máximo no puede ser menor que el mínimo.",
       "playersBest": "El “mejor con” tiene que estar entre el mínimo y el máximo.",
-      "teamSize": "Dices que se juega por equipos: pon cuántos van en cada uno.",
+      "teamSize": "Dices que se juega por equipos: pon cuántos van en cada uno, entre 2 y 8.",
       "decks": "Falta elegir la baraja que hace falta.",
-      "duration": "La duración máxima no puede ser menor que la mínima.",
-      "sections": "Faltan Objetivo, Preparación o Desarrollo: sin esas tres no se puede jugar.",
-      "originalWording": "Marca la casilla de que el texto es tuyo."
+      "duration": "La duración va de 1 a 1440 minutos, y el máximo no puede ser menor que el mínimo.",
+      "sections": "Falta contar cómo se juega: sin eso nadie puede jugarlo.",
+      "originalWording": "Marca la casilla de que el texto es tuyo.",
+      "tagline": "La línea de resumen no puede pasar de 160 caracteres.",
+      "age": "La edad mínima tiene que estar entre 3 y 21. Si vale para todos, deja «todas las edades».",
+      "complexity": "La dificultad va de 1 a 5.",
+      "deckQuantity": "Cuántas barajas del mismo tipo hacen falta: entre 1 y 20."
     },
-    "twoWays": "Guardar en privado solo pide el título: deja las casillas que quieras sin rellenar y sigue otro día. Enviar a revisión pide los mínimos de arriba, y mientras se revisa el juego sigue siendo tuyo: lo encuentras en el buscador y puedes jugar con él.",
+    "twoWays": "Guardar en privado pide solo el nombre y la breve descripción — es lo mínimo que hace falta para guardarlo. Enviar a revisión pide además cómo se juega y con qué baraja, y mientras se revisa el juego sigue siendo tuyo: lo encuentras en el buscador y puedes jugar con él.",
     "stepVisibility": "¿Para ti o para todos?",
     "privateOption": "Solo para mí",
-    "privateOptionBody": "Rápido: con el nombre basta. Deja lo que quieras sin rellenar y termínalo otro día. No lo ve nadie más.",
+    "privateOptionBody": "Rápido: el nombre y una frase, y ya está. Lo demás lo dejas vacío y lo terminas otro día. No lo ve nadie más.",
     "publicOption": "Para todos",
-    "publicOptionBody": "Hay que rellenar lo mínimo para que se entienda. Lo reviso antes de que salga, y mientras tanto puedes usarlo tú.",
-    "stepBasics": "Nombre y de qué va",
-    "stepPlayers": "Jugadores",
-    "stepDecks": "Con qué se juega",
-    "stepDetails": "Detalles (opcional)",
-    "stepRules": "Las reglas",
+    "publicOptionBody": "Hace falta el nombre, la frase, cómo se juega y con qué baraja. Lo reviso antes de que salga, y mientras tanto puedes usarlo tú.",
     "stepSave": "Guardar",
     "stepSend": "Revisar y enviar",
-    "stepMissing": "falta algo",
     "next": "Siguiente",
     "savePrivate": "Guardar solo para mí",
     "privateNote": "Se guarda solo para ti. Lo encontrarás en tu buscador y en tu perfil, y puedes hacerlo público cuando quieras.",
-    "publicNote": "Al enviarlo entra en la cola de revisión. Mientras espera sigue siendo tuyo: lo encuentras en tu buscador y puedes jugar con él."
+    "publicNote": "Al enviarlo entra en la cola de revisión. Mientras espera sigue siendo tuyo: lo encuentras en tu buscador y puedes jugar con él.",
+    "saving": "Guardando…",
+    "ageAny": "Todas las edades",
+    "ageHint": "Déjalo en «todas las edades» si no hay una recomendada.",
+    "technicalDetail": "Detalles técnicos",
+    "saveFailed": {
+      "slugTaken": "Ya hay un juego con un nombre casi igual. Cámbiale algo al nombre y vuelve a intentarlo.",
+      "notAllowed": "No tienes permiso para guardar este juego. Si es de otra persona, haz una copia tuya.",
+      "signedOut": "Se ha cerrado tu sesión. Vuelve a entrar y lo que has escrito sigue aquí.",
+      "offline": "No se ha podido contactar con el servidor. Puede ser tu conexión, un bloqueador del navegador, o que el servidor no esté respondiendo.",
+      "unknown": "No se ha podido guardar. Si vuelve a pasar, mira los detalles técnicos y mándamelos."
+    },
+    "stepName": "Nombre",
+    "stepBrief": "Breve descripción",
+    "stepDescription": "Descripción",
+    "stepNeeds": "¿Qué se necesita?",
+    "stepNotes": "Notas",
+    "gameTitleHint": "Como lo llaméis en tu casa. Entre 2 y 120 caracteres.",
+    "howToPlay": "Cómo se juega",
+    "howToPlayHint": "Cuéntalo como se lo contarías a alguien que se acaba de sentar a la mesa: qué se reparte, qué se hace en tu turno y quién gana.",
+    "extraSections": "Añadir apartados (opcional)",
+    "extraSectionsHint": "Solo si aportan algo. Lo que dejes vacío no aparece en la ficha del juego.",
+    "needsHint": "Lo que hay que tener en la mesa para poder jugar.",
+    "players": "Jugadores",
+    "duration": "Duración aproximada",
+    "durationHint": "En minutos. Si no lo sabes, déjalo vacío.",
+    "complexity": "Dificultad",
+    "complexityHint": "De 1 (se aprende en un minuto) a 5 (hace falta práctica).",
+    "notes": "Notas",
+    "notesHint": "Opcional. Variantes de tu casa, trampas típicas, de dónde viene el juego… lo que no encaja en las reglas.",
+    "charactersLeft": "Te faltan {{n}} caracteres.",
+    "state": {
+      "done": "completo",
+      "missing": "falta algo",
+      "optional": "opcional"
+    }
   },
   "ai": {
     "intro": "Un experto en juegos de cartas que te lo explica de otra forma, hace de árbitro con las reglas delante, o te dice a qué jugar.",
@@ -456,7 +531,10 @@
       "game-not-found": "Ese juego no está publicado, así que no hay reglas que mirar.",
       "question-required": "Escribe la pregunta.",
       "unknown": "Algo ha fallado al preguntar. Inténtalo otra vez."
-    }
+    },
+    "soonTitle": "Estamos trabajando en ello.",
+    "soonBody": "El experto está escrito y funcionando por dentro, pero todavía no está encendido, así que de momento no puede contestarte. Preferimos decírtelo a dejarte una pantalla que falla siempre.",
+    "soonMeanwhile": "Mientras tanto, las reglas de cada juego están completas en su ficha, con el índice para saltar al apartado que necesites en mitad de una partida."
   },
   "privacy": {
     "title": "Privacidad",
@@ -498,5 +576,25 @@
       "body": "Escribe a [pon aquí tu correo de contacto] y te respondo."
     },
     "updated": "Actualizado en octubre de 2026"
+  },
+  "report": {
+    "open": "Reportar este juego",
+    "title": "Reportar este juego",
+    "about": "Sobre «{{name}}». Lo recibo yo y lo miro con el juego delante.",
+    "reason": "¿Qué pasa?",
+    "reasons": {
+      "wrong-rules": "Las reglas están mal o incompletas",
+      "inappropriate": "Contenido inapropiado",
+      "copyright": "El texto está copiado de otro sitio",
+      "spam": "Es spam o no es un juego",
+      "other": "Otra cosa"
+    },
+    "detail": "Cuéntame más (opcional)",
+    "detailPlaceholder": "Por ejemplo: en el mus, las parejas valen al revés de como lo pone.",
+    "send": "Enviar el reporte",
+    "sending": "Enviando…",
+    "sent": "Recibido, gracias. Lo miro y, si hace falta, lo corrijo o lo quito.",
+    "failed": "No se ha podido enviar. Mira tu conexión y vuelve a intentarlo.",
+    "needsAccount": "Hace falta tener cuenta para reportar, para que no se pueda hacer en nombre de otra persona."
   }
 }

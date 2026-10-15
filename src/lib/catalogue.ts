@@ -1,24 +1,13 @@
-import type { Deck, DeckRequirement, Game, Locale, RulesSection } from '@/types/cards'
-import type { DeckRow, GameRow, GameTextRow } from '@/types/db'
+import type { Deck, Game, Locale } from '@/types/cards'
+import type { DeckRow, GameRow } from '@/types/db'
 import { supabase } from './supabase'
 import { SAMPLE_GAMES, gameBySlug } from './sampleGames'
 import { STANDARD_DECKS, deckBySlug } from './decks'
+import { fetchPublishedGame, fetchPublishedGames } from './published'
+import { GAME_COLUMNS, mapGame } from './gameMap'
 
-/**
- * The catalogue, from Postgres when a Supabase project is configured and from the
- * bundled sample files otherwise. Every page goes through here, so the app is
- * explorable with no backend and identical in shape once there is one.
- */
-
-const GAME_COLUMNS = `
-  id, slug, players_min, players_max, players_best, supports_teams, team_size,
-  deck_count_total, missing_cards_policy, missing_cards_note, duration_min, duration_max,
-  complexity, age_min, requires_extras, mechanics, adult_only, rating_avg, rating_count,
-  primary_locale,
-  author:profiles!games_author_id_fkey(username, display_name),
-  texts:game_texts(locale, title, tagline, summary, sections),
-  decks:game_decks(quantity, cards_removed, note, deck:decks(slug, name, card_count))
-`
+// re-exported: the mapper tests and the snapshot writer both ask for it here
+export { GAME_COLUMNS, mapGame }
 
 // `parent:parent_deck_id(...)` embeds through the foreign key column. For a table
 // that points at itself, PostgREST cannot resolve the constraint name as a hint
@@ -30,59 +19,12 @@ const DECK_COLUMNS = `
   parent:parent_deck_id(slug)
 `
 
-/** Prefer the reader's language, then the game's own, then whatever exists. */
-function pickText(rows: GameTextRow[], locale: Locale, primary: string): GameTextRow | undefined {
-  return (
-    rows.find((r) => r.locale === locale) ??
-    rows.find((r) => r.locale === primary) ??
-    rows[0]
-  )
-}
 
-/** Exported for the mapper tests: this is where every nullable column lands. */
-export function mapGame(row: GameRow, locale: Locale): Game | null {
-  const text = pickText(row.texts ?? [], locale, row.primary_locale)
-  // a game with no text in any language has nothing to show
-  if (text === undefined) return null
-
-  const decks: DeckRequirement[] = (row.decks ?? []).map((d) => ({
-    deckSlug: d.deck?.slug ?? '',
-    quantity: d.quantity,
-    ...(d.deck !== null ? { deckName: d.deck.name, deckCardCount: d.deck.card_count } : {}),
-    ...(d.cards_removed !== null && d.cards_removed.length > 0
-      ? { cardsRemoved: d.cards_removed }
-      : {}),
-    ...(d.note !== null ? { note: d.note } : {}),
-  }))
-
-  return {
-    id: row.id,
-    slug: row.slug,
-    title: text.title,
-    summary: text.summary,
-    sections: (text.sections ?? []) as RulesSection[],
-    playersMin: row.players_min,
-    playersMax: row.players_max,
-    supportsTeams: row.supports_teams,
-    decks,
-    deckCountTotal: row.deck_count_total,
-    missingCardsPolicy: row.missing_cards_policy,
-    requiresExtras: row.requires_extras ?? [],
-    mechanics: row.mechanics ?? [],
-    adultOnly: row.adult_only,
-    ratingAvg: Number(row.rating_avg),
-    ratingCount: row.rating_count,
-    ...(text.tagline !== null ? { tagline: text.tagline } : {}),
-    ...(row.author !== null ? { authorName: row.author.display_name } : {}),
-    ...(row.players_best !== null ? { playersBest: row.players_best } : {}),
-    ...(row.team_size !== null ? { teamSize: row.team_size } : {}),
-    ...(row.missing_cards_note !== null ? { missingCardsNote: row.missing_cards_note } : {}),
-    ...(row.duration_min !== null ? { durationMin: row.duration_min } : {}),
-    ...(row.duration_max !== null ? { durationMax: row.duration_max } : {}),
-    ...(row.complexity !== null ? { complexity: row.complexity } : {}),
-    ...(row.age_min !== null ? { ageMin: row.age_min } : {}),
-  }
-}
+/**
+ * The catalogue, from Postgres when a Supabase project is configured and from the
+ * bundled sample files otherwise. Every page goes through here, so the app is
+ * explorable with no backend and identical in shape once there is one.
+ */
 
 /** Exported for the mapper tests. */
 export function mapDeck(row: DeckRow): Deck {
@@ -101,25 +43,32 @@ export function mapDeck(row: DeckRow): Deck {
   }
 }
 
+/**
+ * The public catalogue: the approved, frozen version of every published game.
+ *
+ * It reads `game_versions`, not `games`. The author's row is their working
+ * copy — they can edit it, send it back for review or hide it — and none of
+ * that may take a game off the shelf for everybody who is already playing it.
+ * See src/lib/published.ts.
+ */
 export async function fetchGames(locale: Locale): Promise<Game[]> {
   if (supabase === null) return SAMPLE_GAMES
-
-  const { data, error } = await supabase
-    .from('games')
-    .select(GAME_COLUMNS)
-    .eq('status', 'published')
-    .eq('visibility', 'public')
-    .eq('listed', true)
-    .order('rating_avg', { ascending: false })
-
-  if (error !== null) throw new Error(error.message)
-  return (data as unknown as GameRow[])
-    .map((row) => mapGame(row, locale))
-    .filter((g): g is Game => g !== null)
+  return fetchPublishedGames(locale)
 }
 
+/**
+ * One game by its address.
+ *
+ * The published version first, because that is what a reader is asking for and
+ * what a shared link points at. Falling back to the author's own row is what
+ * lets an author (and a reviewer) open a game that is not published yet — RLS
+ * decides whether they may, so there is nothing to check here.
+ */
 export async function fetchGame(slug: string, locale: Locale): Promise<Game | null> {
   if (supabase === null) return gameBySlug(slug) ?? null
+
+  const published = await fetchPublishedGame(slug, locale)
+  if (published !== null) return published
 
   const { data, error } = await supabase
     .from('games')

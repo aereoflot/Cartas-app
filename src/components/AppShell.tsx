@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
 import { useSync } from '@/hooks/useSync'
 import { InstallInvite } from './InstallInvite'
+import { OfflineNotice } from './OfflineNotice'
 import { DeckIcon, FriendsIcon, HomeIcon, SparkleIcon } from './icons'
 
 // No search tab: the searcher is the first thing on the home screen, so a tab
@@ -61,6 +62,8 @@ export function AppShell() {
           </NavLink>
         </div>
       </header>
+
+      <OfflineNotice />
 
       <main className="flex-1 pb-24">
         <Outlet />

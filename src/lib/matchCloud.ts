@@ -127,9 +127,9 @@ export async function pushMatches(
         deck_ids: match.deckSlugs
           .map((slug) => maps.deckIdBySlug.get(slug))
           .filter((id): id is string => id !== undefined),
-        player_names: match.playerNames,
-        notes: match.notes,
-        tally: match.tally,
+        player_names: match.playerNames ?? [],
+        notes: match.notes ?? '',
+        tally: match.tally ?? [],
         stake: match.stake ?? null,
         group_id:
           match.groupId !== undefined && accountGroupIds.has(match.groupId)
@@ -137,7 +137,12 @@ export async function pushMatches(
             : null,
         started_at: match.startedAt,
         ended_at: match.endedAt ?? null,
-        updated_at: match.updatedAt,
+        // Not `match.updatedAt` on its own. PostgREST builds one INSERT for the
+        // whole batch, so a key that is absent from a row arrives as null
+        // instead of taking the column default — and `updated_at` is not null.
+        // One match written by an older version of the app, with no timestamp,
+        // was enough to fail the push for everything.
+        updated_at: match.updatedAt ?? match.startedAt,
       }
     })
     .filter((row): row is NonNullable<typeof row> => row !== null)

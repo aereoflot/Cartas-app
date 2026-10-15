@@ -49,10 +49,17 @@ export type SyncStatus = 'off' | 'working' | 'saved' | 'error'
 
 export interface SyncState {
   status: SyncStatus
+  /** The server's own wording, for the small print — never for the headline. */
   error: string | null
+  /**
+   * Which half did not go up. The two are separate requests, and saying
+   * "favourites could not be saved" when what failed was a match is how
+   * somebody ends up looking for a problem in the wrong place.
+   */
+  failed: 'collections' | 'matches' | 'both' | null
 }
 
-let state: SyncState = { status: 'off', error: null }
+let state: SyncState = { status: 'off', error: null, failed: null }
 const watchers = new Set<() => void>()
 
 export const syncState = (): SyncState => state
@@ -61,6 +68,9 @@ export function subscribeSync(listener: () => void): () => void {
   watchers.add(listener)
   return () => watchers.delete(listener)
 }
+
+const reasonText = (reason: unknown): string =>
+  reason instanceof Error ? reason.message : String(reason)
 
 function setState(next: SyncState): void {
   state = next
@@ -71,18 +81,30 @@ function schedulePush(userId: string): void {
   if (pushTimer !== null) clearTimeout(pushTimer)
   pushTimer = setTimeout(() => {
     pushTimer = null
-    setState({ status: 'working', error: null })
-    void Promise.all([
+    setState({ status: 'working', error: null, failed: null })
+    // allSettled, not all: one half failing is not a reason to leave the other
+    // half's result unreported, and it is what makes the message truthful
+    void Promise.allSettled([
       pushCollections(userId, readCollections()),
       pushChangedMatches(userId),
-    ])
-      .then(() => setState({ status: 'saved', error: null }))
-      .catch((error: unknown) =>
-        setState({
-          status: 'error',
-          error: error instanceof Error ? error.message : String(error),
-        }),
-      )
+    ]).then(([collections, matches]) => {
+      const broke =
+        collections.status === 'rejected' && matches.status === 'rejected'
+          ? 'both'
+          : collections.status === 'rejected'
+            ? 'collections'
+            : matches.status === 'rejected'
+              ? 'matches'
+              : null
+
+      if (broke === null) {
+        setState({ status: 'saved', error: null, failed: null })
+        return
+      }
+      const reason =
+        collections.status === 'rejected' ? collections.reason : (matches as PromiseRejectedResult).reason
+      setState({ status: 'error', error: reasonText(reason), failed: broke })
+    })
   }, PUSH_DELAY_MS)
 }
 
@@ -91,7 +113,7 @@ export async function startSync(userId: string): Promise<void> {
   if (activeUser === userId) return
   stopSync()
   activeUser = userId
-  setState({ status: 'working', error: null })
+  setState({ status: 'working', error: null, failed: null })
 
   try {
     const remote = await pullCollections(userId)
@@ -119,15 +141,12 @@ export async function startSync(userId: string): Promise<void> {
     }
 
     await syncMatches(userId)
-    setState({ status: 'saved', error: null })
+    setState({ status: 'saved', error: null, failed: null })
   } catch (error) {
     // offline, or the account cannot be read: keep what is on the device and let
     // the next local change try again
     applying = false
-    setState({
-      status: 'error',
-      error: error instanceof Error ? error.message : String(error),
-    })
+    setState({ status: 'error', error: reasonText(error), failed: 'both' })
   }
 
   unsubscribe = subscribe(() => {
@@ -174,7 +193,7 @@ async function pushChangedMatches(userId: string): Promise<void> {
 }
 
 export function stopSync(): void {
-  setState({ status: 'off', error: null })
+  setState({ status: 'off', error: null, failed: null })
   unsubscribe?.()
   unsubscribe = null
   if (pushTimer !== null) {

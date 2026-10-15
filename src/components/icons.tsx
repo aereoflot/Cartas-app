@@ -66,3 +66,11 @@ export const StarIcon = ({ filled, className }: Props & { filled?: boolean }) =>
     <path d="m12 3.8 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 10l5.9-.8Z" />
   </svg>
 )
+
+/** A flag: reporting something. Top right of a game, where a menu would be. */
+export const FlagIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="M5.5 21V4" />
+    <path d="M5.5 4.5h10l-1.4 3.5 1.4 3.5h-10" />
+  </Svg>
+)

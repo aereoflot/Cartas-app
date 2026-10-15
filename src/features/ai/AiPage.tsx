@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { AiMode, AiProblem, Register } from '@/lib/ai'
-import { AiError, askExpert } from '@/lib/ai'
+import { AiError, askExpert, isExpertEnabled } from '@/lib/ai'
 import { useGames } from '@/hooks/useCatalogue'
 import { useSession } from '@/hooks/useSession'
 import { Markdown } from '@/components/Markdown'
@@ -59,6 +59,11 @@ export function AiPage() {
       setAsking(false)
     }
   }
+
+  // Before anything else, including the sign-in wall: there is nothing behind
+  // it to sign in for yet, and asking somebody to make an account to reach a
+  // "coming soon" sign is a small insult.
+  if (!isExpertEnabled) return <ExpertComingSoon />
 
   if (!isSupabaseConfigured || session === null) {
     return (
@@ -172,6 +177,29 @@ export function AiPage() {
           <p className="mt-4 border-t border-line pt-3 text-xs text-muted">{t('ai.caveat')}</p>
         </section>
       )}
+    </div>
+  )
+}
+
+/**
+ * What the expert is instead of a form that would always fail.
+ *
+ * Deliberately specific about what is missing. "Coming soon" with no reason is
+ * the kind of notice that stops being believed; saying it is written and
+ * waiting on an account with no credit is something somebody can judge for
+ * themselves.
+ */
+function ExpertComingSoon() {
+  const { t } = useTranslation()
+
+  return (
+    <div className="px-4 py-10">
+      <h1 className="text-xl font-bold">{t('nav.expert')}</h1>
+      <div className="mt-4 rounded-card border border-dashed border-line bg-surface px-4 py-5">
+        <p className="text-base font-semibold text-accent">{t('ai.soonTitle')}</p>
+        <p className="mt-2 text-sm leading-relaxed text-muted">{t('ai.soonBody')}</p>
+        <p className="mt-3 text-sm leading-relaxed text-muted">{t('ai.soonMeanwhile')}</p>
+      </div>
     </div>
   )
 }

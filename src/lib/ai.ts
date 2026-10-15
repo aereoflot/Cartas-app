@@ -7,7 +7,17 @@ import { supabase } from './supabase'
  *
  * The answer arrives as a stream, so the first words show up while the rest is
  * still being written.
+ *
+ * It is switched off for now. The edge function is deployed and holds a key,
+ * but the Anthropic account has no credit, so every question would come back as
+ * an error that is nobody's fault and that nobody can act on. A screen that
+ * says "we are working on it" is the truth; a form that always fails is not.
+ *
+ * `VITE_EXPERT_ENABLED=1` turns it back on with no code change — the whole
+ * feature is still here, and so are its error messages.
  */
+
+export const isExpertEnabled = import.meta.env.VITE_EXPERT_ENABLED === '1'
 
 export type AiMode = 'explain' | 'referee' | 'suggest' | 'author'
 export type Register = 'kid' | 'quick' | 'example' | 'compare'

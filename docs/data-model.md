@@ -639,3 +639,35 @@ always look newer and would have let a stale phone win every conflict.
 byline and a searchable handle have to be — but `hide_adult` sat in that same row, so anyone could
 read whether a given person hides adult games. It moved to `profile_settings`, which only its owner
 can read or write, and it is wired up now: a setting that does nothing is worse than no setting.
+
+## `game_versions` — the published copy (migration 0010)
+
+A published game used to be the author's own row with `status = 'published'`, which meant its author
+could take it off the shelf two different ways: by saving it privately, and by editing it (which
+sends it back to the queue). Both look the same to somebody who found the game last week and opens
+the app to find it gone.
+
+So the approved game is frozen in its own row and that is what the public catalogue reads:
+
+| column | why |
+|---|---|
+| `game_id` | primary key: one published version per game, replaced on each approval |
+| `slug` | the public address, unique here too — two snapshots at one address is a question with two answers |
+| `version` | bumped on every re-approval, so "which approval is this" has an answer |
+| `payload` | the game in exactly the shape the catalogue query returns, so one mapper reads both paths |
+| `approved_at` / `approved_by` | who decided, and when |
+
+The counters (`rating_avg`, `rating_count`) stay on `games` and are read live: a frozen rating would
+stop counting the day it was approved.
+
+Writes belong to reviewers alone (`game_versions_write` uses `is_reviewer()`). That is the whole
+mechanism — write access to this table *is* the power to publish — and deleting a row is the only
+way back through the door, which is what answers a report that turns out to be right.
+
+## `profile_settings.birthdate` (migration 0009)
+
+Asked once, at sign-up. The 18+ gate is computed from it rather than stored as a flag, so it unlocks
+by itself on the eighteenth birthday with nothing to change and nobody to ask. Nullable: the
+accounts that existed before it was asked never gave one, and for those the old `hide_adult`
+preference still decides. Readable only by its owner — `profiles` is world-readable, which is why
+nothing personal goes in it.

@@ -12,6 +12,7 @@ import { MatchHistoryPage } from '@/features/matches/MatchHistoryPage'
 import { NotFoundPage } from '@/features/NotFoundPage'
 import { PrivacyPage } from '@/features/legal/PrivacyPage'
 import { LoginPage } from '@/features/auth/LoginPage'
+import { NewPasswordPage } from '@/features/auth/NewPasswordPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { FriendsPage } from '@/features/friends/FriendsPage'
 import { Loading } from '@/components/QueryState'
@@ -47,6 +48,9 @@ export function AppRoutes() {
         <Route path="ai" element={<Lazy><AiPage /></Lazy>} />
         <Route path="admin/review" element={<Lazy><ReviewQueuePage /></Lazy>} />
         <Route path="login" element={<LoginPage />} />
+        {/* where the recovery email lands; the path is in the email, so it does
+            not change without invalidating every link already sent */}
+        <Route path="nueva-contrasena" element={<NewPasswordPage />} />
         <Route path="privacidad" element={<PrivacyPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="*" element={<NotFoundPage />} />

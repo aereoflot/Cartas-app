@@ -39,9 +39,10 @@ lives in `~/.local/node`; `./start.sh` puts it on `PATH` for you.
 npm install
 ./start.sh                             # http://localhost:5173
 npm run build                          # typecheck + production build
-npm test                               # 112 app tests (vitest + jsdom)
-npm run test:schema                    # migrations on a throwaway Postgres, 44 assertions
+npm test                               # 196 app tests (vitest + jsdom)
+npm run test:schema                    # migrations on a throwaway Postgres, 51 assertions
 npm run check:remote                   # the app's real queries against the live project
+npm run check:i18n                     # every key the code asks for, in both languages
 python3 supabase/migrate.py --status   # which migrations are applied
 python3 supabase/migrate.py            # apply the pending ones
 python3 supabase/live_check.py         # write paths, on throwaway accounts it then deletes
@@ -50,6 +51,15 @@ python3 supabase/run_sql.py <file.sql> # a one-off script
 
 `npm run test:schema` needs no Docker and no Supabase account: it downloads a prebuilt Postgres 17
 into `~/.cache/cartas-pgtest/` on first run.
+
+The Python scripts that talk to the live project (`migrate.py`, `live_check.py`, `run_sql.py`,
+`verify_functions.py`) need one dependency: `pip install pg8000`. On a Debian-managed Python that
+refuses to install into the system (PEP 668), a virtualenv is the way:
+`python3 -m venv .venv && .venv/bin/pip install pg8000 && .venv/bin/python supabase/migrate.py`.
+
+`npm run check:i18n` exists because a missing translation key is invisible: i18next renders the key
+itself, so `auth.problem.wrongLogin` reached the screen as that literal text for every wrong
+password, and neither the typechecker nor a test could see it.
 
 ## What works
 
@@ -70,15 +80,34 @@ into `~/.cache/cartas-pgtest/` on first run.
 - **Friends** — found by **handle**, never by email. Request, accept, decline, see who is waiting.
 - **Groups** — members are either real friends (who get the chat) or plain names for whoever has no
   account; the chip says which. Your matches together, and the chat.
-- **Publishing** — an editor with the spec first and the rules template after, two attestations
-  (original wording, 18+), save as draft or submit. **Your games** on your profile shows the state
-  of each and, for a rejection, the reason.
+- **Publishing** — five questions: name, short description, description, what you need, notes. Each
+  one a drawer that says whether it is complete, what is missing, and why — in the same words the
+  database would use. Saving privately asks for the two things a game cannot be stored without (a
+  name and a sentence); submitting also asks how it is played and which deck. **Your games** on your
+  profile shows where each one stands in a sentence, and a rejection carries its reason.
+- **Published is published** — the approved version of a game is frozen in `game_versions`, which is
+  what the public catalogue reads. An author editing or hiding their own copy cannot take a game off
+  the shelf for people who are already playing it; only a reviewer can, by taking it down, which is
+  the answer to a report. See migration `0010`.
+- **Reporting** — a flag in the corner of every game. Reports land on the same review screen as
+  submitted games, because they are the same job: somebody looking at a game and deciding.
 - **Reviewing** — `/admin/review` for the owner: every submitted game shown exactly as a reader
   will see it, approve or reject with a reason, logged in `game_reviews`.
 - **The expert** — explain / referee / suggest, streamed. Needs the edge function deployed and an
   Anthropic key; until then the screen says exactly that and what to run.
-- **18+** — a one-time advisory before any adult game, and a private *hide 18+ games* setting.
-- **Sign-in** — a link by email, no passwords.
+- **18+** — a date of birth, asked once when the account is made and never again. It replaces a
+  *hide adult games* checkbox, which was a preference rather than an age: anybody could untick it,
+  including whoever it existed to protect. A date keeps being true, so the games appear by
+  themselves on the eighteenth birthday, with nobody to ask. It lives in `profile_settings`, which
+  only its owner can read. A one-time advisory still comes before any adult game.
+- **Sign-in** — a handle, an email and a password; nothing to confirm. A forgotten password is
+  recovered by an emailed link (`/nueva-contrasena`).
+- **Your account** — the profile is drawers now: account (name, handle, email, password), your
+  games, matches and friends, installing, privacy and deletion. The handle is editable; it was fixed
+  on the grounds of being "the only door you have", which stopped being true when accounts got an
+  email address to sign in with.
+- **Offline** — a line under the header while there is no signal, for somebody signed in: everything
+  keeps working, nothing is lost, and nothing is being saved to the account until it is back.
 
 ## Local first, account second
 
@@ -171,11 +200,16 @@ are using. `python3 supabase/verify_functions.py` proves the whole path on a thr
 
 What the database enforces, with tests rather than hope:
 
-- **Every table has row level security**, and 44 schema assertions check the rules that matter: an
+- **Every table has row level security**, and 51 schema assertions check the rules that matter: an
   author cannot publish their own game, editing a published game forces re-review, a rejection
   needs a reason, only a reviewer writes the review log, sharing needs an accepted friendship, a
   group member cannot rewrite the membership, a message cannot be edited, and nobody sees anybody
   else's favourites, folders, inventory, matches, drafts or chat.
+- **Only a reviewer writes `game_versions`**, which is the table the public catalogue reads. Write
+  access to it *is* the power to publish, so an author has none: they cannot put a game on the
+  shelf, and they cannot take one off it by hiding or editing their own copy. Asserted both ways.
+- **A birth date is private to its owner.** It drives the 18+ gate and lives in `profile_settings`,
+  never in the world-readable `profiles` row — asserted, including that the column is not there.
 - **`profiles.role` is unwritable from a client** — column grants plus a trigger. Otherwise anyone
   could make themselves the owner. Promoting the owner is a SQL script, on purpose.
 - **No email is reachable from the client.** `profiles` has no email column; searching is a
@@ -194,10 +228,18 @@ What the database enforces, with tests rather than hope:
 
 ## Still open
 
-- The expert is **deployed** and holds a key, but it has never answered: the Anthropic API is
-  pay-as-you-go and the account has no credit yet. `python3 supabase/verify_functions.py --with-ai`
-  is the one command that will say whether it really works.
-- A screen for reporting a game. The table and the rules exist; the button does not.
-- English translations of the nine games; the i18n layer and the `game_texts` rows are ready.
+- **The expert is parked.** It is deployed and holds a key, but the Anthropic account has no credit,
+  so every question would come back as an error nobody can act on. The screen says we are working on
+  it, and `VITE_EXPERT_ENABLED=1` turns the whole feature back on with no code change.
+  `python3 supabase/verify_functions.py --with-ai` is the command that will say whether it answers.
+- **Password recovery needs SMTP.** The code is done and its errors are worded, but delivery goes
+  through Supabase's built-in email service, which is capped at a few an hour and often does not
+  deliver. Production needs a custom SMTP provider configured in the Supabase dashboard, and
+  `/nueva-contrasena` added to the redirect allow-list.
+- **English translations of the nine games.** The gap is now visible rather than silent: a reader
+  with the app in English is told the rules are in Spanish instead of being handed them with no
+  explanation. `game_texts` already takes a row per language, and `game_texts_translate` already
+  lets any signed-in reader add a language a game does not have — so the next step is a screen for
+  contributing one, not a schema change.
 - Offline caching of favourited rules (a service worker), so a favourite is readable with no signal.
-- Game versioning, so editing a published game does not take it off the shelf while it waits.
+  The worker caches the shell and the assets today, not the rules.

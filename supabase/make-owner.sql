@@ -32,7 +32,19 @@ update profiles p
    and u.email = 'ancorodrigezortega@gmail.com'
    and p.role <> 'owner';
 
--- 3. comprobación: una fila, con role = owner
+-- 3. moderadores: pueden revisar igual que el dueño, y puede haber varios.
+--    La diferencia es que el dueño es único y no se le puede quitar el papel
+--    desde aquí sin dárselo a otro; un moderador se quita poniéndolo a 'user'.
+--    Añade o quita correos de esta lista.
+update profiles p
+   set role = 'moderator'
+  from auth.users u
+ where u.id = p.id
+   and u.email in ('esquemadelengua@gmail.com')
+   and p.role = 'user';
+
+-- 4. comprobación: quién puede revisar, y con qué papel
 select p.username, p.role, u.email
   from profiles p join auth.users u on u.id = p.id
- where u.email = 'ancorodrigezortega@gmail.com';
+ where p.role in ('owner', 'moderator')
+ order by p.role;

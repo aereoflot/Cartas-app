@@ -250,6 +250,80 @@ check("published game readable by anon", t_published_game_is_public)
 check("rejection without a reason is refused", t_rejection_needs_reason)
 check("editing a published game forces re-review", t_editing_published_game_requeues_it)
 
+
+def t_only_a_reviewer_publishes_a_version():
+    """The one-way door: the author cannot put anything on the public shelf.
+
+    `game_versions` is what readers read, so write access to it *is* the power
+    to publish. If an author could write here, every other rule about not
+    self-publishing would be decoration.
+    """
+    as_user(AUTHOR)
+    must_fail("""insert into game_versions (game_id, slug, payload)
+                 values (:g, 'colado-por-la-ventana', '{}'::jsonb)""", g=GAME)
+
+    as_user(OWNER)
+    con.run("""insert into game_versions (game_id, slug, version, payload, approved_by)
+               values (:g, 'version-de-prueba', 1,
+                       jsonb_build_object('players_min', 2, 'players_max', 4), :o)
+               on conflict (game_id) do update set version = game_versions.version + 1""",
+            g=GAME, o=OWNER)
+
+
+def t_a_published_version_is_public():
+    """Being on the shelf is the whole condition: no status, no visibility."""
+    as_anon()
+    assert con.run("select count(*) from game_versions where game_id = :g",
+                   g=GAME)[0][0] == 1, "an anonymous reader cannot see a published game"
+
+
+def t_author_cannot_withdraw_a_published_version():
+    """Hiding or editing your working copy must not empty the shelf."""
+    as_user(AUTHOR)
+    must_fail("delete from game_versions where game_id = :g", g=GAME)
+    must_fail("update game_versions set slug = 'otro' where game_id = :g", g=GAME)
+
+    # ... and doing both of the things an author *can* do leaves it standing
+    con.run("""update games set status = 'draft', visibility = 'private', listed = false
+                where id = :g""", g=GAME)
+    as_anon()
+    assert con.run("select count(*) from game_versions where game_id = :g",
+                   g=GAME)[0][0] == 1, "the published version went away with the author's copy"
+
+    # put the working copy back as it was: the assertions after this one share
+    # this game, and a test that leaves the world changed breaks its neighbours
+    as_admin()
+    con.run("""update games set status = 'published', visibility = 'public', listed = true
+                where id = :g""", g=GAME)
+
+
+def t_reviewer_can_take_a_game_down():
+    """The only way back through the door, and it belongs to the reviewer."""
+    as_user(OWNER)
+    con.run("delete from game_versions where game_id = :g", g=GAME)
+    as_anon()
+    assert con.run("select count(*) from game_versions where game_id = :g", g=GAME)[0][0] == 0
+
+
+def t_two_games_cannot_claim_one_address():
+    as_user(OWNER)
+    con.run("""insert into game_versions (game_id, slug, payload)
+               values (:g, 'direccion-unica', '{}'::jsonb)""", g=GAME)
+    other = con.run("select id from games where id <> :g limit 1", g=GAME)[0][0]
+    must_fail("""insert into game_versions (game_id, slug, payload)
+                 values (:o, 'direccion-unica', '{}'::jsonb)""", o=other)
+    as_user(OWNER)
+    con.run("delete from game_versions where game_id = :g", g=GAME)
+
+
+print("\n== publicar es una puerta de un solo sentido ==")
+check("only a reviewer puts a game on the public shelf", t_only_a_reviewer_publishes_a_version)
+check("a published version is readable by anyone", t_a_published_version_is_public)
+check("the author cannot withdraw it, by hiding or by editing",
+      t_author_cannot_withdraw_a_published_version)
+check("a reviewer can take it down", t_reviewer_can_take_a_game_down)
+check("two games cannot claim one address", t_two_games_cannot_claim_one_address)
+
 print("\n== derived data ==")
 check("deck_count_total trigger", t_deck_count_trigger)
 check("rating and favorite triggers", t_rating_and_favorite_triggers)
@@ -351,8 +425,47 @@ def t_hide_adult_is_private():
     assert 'hide_adult' not in columns, "the preference is still on the public row"
 
 
+def t_birthdate_is_private():
+    """A birth date is the most personal thing here, so it is checked hardest.
+
+    It drives the 18+ gate and nothing else, and it has to be unreadable by
+    anybody but its owner. `profiles` is world-readable, which is why it is in
+    `profile_settings` and why this asserts it is not in the other table.
+    """
+    as_user(READER)
+    con.run("""insert into profile_settings (profile_id, birthdate)
+               values (:p, date '1990-07-04')
+               on conflict (profile_id) do update set birthdate = date '1990-07-04'""",
+            p=READER)
+    assert con.run("select birthdate from profile_settings where profile_id = :p",
+                   p=READER)[0][0].isoformat() == '1990-07-04'
+
+    as_user(STRANGER)
+    assert con.run("""select count(*) from profile_settings
+                       where profile_id = :p and birthdate is not null""",
+                   p=READER)[0][0] == 0, "another user can read your birth date"
+    must_fail("update profile_settings set birthdate = null where profile_id = :p", p=READER)
+
+    as_anon()
+    columns = [r[0] for r in con.run("""select column_name from information_schema.columns
+                                         where table_name = 'profiles'""")]
+    assert 'birthdate' not in columns, "a birth date is sitting on the public row"
+
+
+def t_birthdate_refuses_nonsense():
+    """Null is allowed — the accounts that already exist never gave one."""
+    as_user(READER)
+    con.run("""insert into profile_settings (profile_id, birthdate) values (:p, null)
+               on conflict (profile_id) do update set birthdate = null""", p=READER)
+    must_fail("""update profile_settings set birthdate = date '1800-01-01'
+                  where profile_id = :p""", p=READER)
+
+
 print("\n== ajustes privados ==")
 check("the hide-18+ setting is private to its owner", t_hide_adult_is_private)
+check("a birth date is private to its owner", t_birthdate_is_private)
+check("a birth date before 1900 is refused, and none at all is fine",
+      t_birthdate_refuses_nonsense)
 
 GROUP = 'dddddddd-0000-0000-0000-000000000001'
 FOLDER = 'eeeeeeee-0000-0000-0000-000000000001'

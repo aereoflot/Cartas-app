@@ -11,8 +11,11 @@ import { InstallSteps } from './InstallSteps'
  *
  * Nothing is rendered where installing is impossible or already done: an offer
  * that cannot be honoured is worse than no offer.
+ *
+ * `bare` drops the card and the heading, for when it sits inside a drawer that
+ * already says what it is.
  */
-export function InstallSection() {
+export function InstallSection({ bare = false }: { bare?: boolean } = {}) {
   const { t } = useTranslation()
   const { route, install } = useInstallOffer()
   const [steps, setSteps] = useState(false)
@@ -33,10 +36,12 @@ export function InstallSection() {
     if (outcome === 'accepted') setInstalled(true)
   }
 
+  const Wrapper = bare ? 'div' : 'section'
+
   return (
-    <section className="rounded-card border border-line bg-surface p-4">
-      <h2 className="font-semibold">{t('install.profileTitle')}</h2>
-      <p className="mt-1 text-sm text-muted">{t('install.profileBody')}</p>
+    <Wrapper className={bare ? '' : 'rounded-card border border-line bg-surface p-4'}>
+      {!bare && <h2 className="font-semibold">{t('install.profileTitle')}</h2>}
+      <p className={`text-sm text-muted${bare ? '' : ' mt-1'}`}>{t('install.profileBody')}</p>
 
       {installed ? (
         <p className="mt-3 text-sm font-medium text-accent">{t('install.installed')}</p>
@@ -64,6 +69,6 @@ export function InstallSection() {
           )}
         </>
       )}
-    </section>
+    </Wrapper>
   )
 }

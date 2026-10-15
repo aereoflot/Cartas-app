@@ -1,6 +1,7 @@
 import type { Game } from '@/types/cards'
 import type { GameDraft } from './gameDraft'
 import { emptyDraft, slugFromTitle, SECTION_TEMPLATE, usedSections } from './gameDraft'
+import { classifySaveError, SaveError } from './saveError'
 import { supabase } from './supabase'
 
 /**
@@ -57,6 +58,11 @@ export function draftFromGame(game: Game): GameDraft {
 function specRow(draft: GameDraft, status: SaveStatus) {
   return {
     status,
+    // Private means private in the row too, not merely unpublished: a draft
+    // used to be stored as `public` and kept out of sight by its status alone,
+    // which is one forgotten filter away from being a leak.
+    visibility: status === 'draft' ? 'private' : 'public',
+    listed: status !== 'draft',
     primary_locale: 'es',
     players_min: draft.playersMin,
     players_max: draft.playersMax,
@@ -86,7 +92,7 @@ async function freeSlug(wanted: string): Promise<string> {
       .select('slug')
       .eq('slug', candidate)
       .maybeSingle()
-    if (error !== null) throw new Error(error.message)
+    if (error !== null) throw classifySaveError(error)
     if (data === null) return candidate
   }
   return `${wanted.slice(0, 70)}-${Math.random().toString(36).slice(2, 7)}`
@@ -107,14 +113,14 @@ async function writeTextAndDecks(gameId: string, draft: GameDraft): Promise<void
     },
     { onConflict: 'game_id,locale' },
   )
-  if (textError !== null) throw new Error(textError.message)
+  if (textError !== null) throw classifySaveError(textError)
 
   const slugs = draft.decks.map((deck) => deck.deckSlug)
   const { data: deckRows, error: deckError } = await supabase
     .from('decks')
     .select('id, slug')
     .in('slug', slugs)
-  if (deckError !== null) throw new Error(deckError.message)
+  if (deckError !== null) throw classifySaveError(deckError)
 
   const idBySlug = new Map((deckRows as Array<{ id: string; slug: string }>)
     .map((row) => [row.slug, row.id]))
@@ -136,7 +142,7 @@ async function writeTextAndDecks(gameId: string, draft: GameDraft): Promise<void
     const { error } = await supabase
       .from('game_decks')
       .upsert(rows, { onConflict: 'game_id,deck_id' })
-    if (error !== null) throw new Error(error.message)
+    if (error !== null) throw classifySaveError(error)
   }
 
   // a deck the author removed from the list must go, or the requirements would lie
@@ -145,7 +151,7 @@ async function writeTextAndDecks(gameId: string, draft: GameDraft): Promise<void
   const { error: dropError } = await (keep.length === 0
     ? drop
     : drop.not('deck_id', 'in', `(${keep.join(',')})`))
-  if (dropError !== null) throw new Error(dropError.message)
+  if (dropError !== null) throw classifySaveError(dropError)
 }
 
 export interface SavedGame {
@@ -158,7 +164,7 @@ export async function createGame(
   draft: GameDraft,
   status: SaveStatus,
 ): Promise<SavedGame> {
-  if (supabase === null) throw new Error('no backend')
+  if (supabase === null) throw new SaveError('unknown', 'no backend')
 
   const slug = await freeSlug(slugFromTitle(draft.title))
   const { data, error } = await supabase
@@ -166,7 +172,7 @@ export async function createGame(
     .insert({ ...specRow(draft, status), slug, author_id: authorId })
     .select('id, slug')
     .single()
-  if (error !== null) throw new Error(error.message)
+  if (error !== null) throw classifySaveError(error)
 
   const saved = data as SavedGame
   await writeTextAndDecks(saved.id, draft)
@@ -181,7 +187,7 @@ export async function updateGame(
   if (supabase === null) return
 
   const { error } = await supabase.from('games').update(specRow(draft, status)).eq('id', gameId)
-  if (error !== null) throw new Error(error.message)
+  if (error !== null) throw classifySaveError(error)
   await writeTextAndDecks(gameId, draft)
 }
 
@@ -200,7 +206,7 @@ export async function listMyGames(authorId: string): Promise<Array<{
     .select('id, slug, status, game_texts(title), game_reviews(decision, reason, created_at)')
     .eq('author_id', authorId)
     .order('updated_at', { ascending: false })
-  if (error !== null) throw new Error(error.message)
+  if (error !== null) throw classifySaveError(error)
 
   interface Row {
     id: string

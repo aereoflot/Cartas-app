@@ -11,6 +11,7 @@ export const SAMPLE_GAMES: Game[] = [
   {
     "id": "99541f53-9fa3-5cce-a049-835293c3e039",
     "slug": "brisca",
+    "textLocale": "es",
     "title": "Brisca",
     "summary": "Un juego de bazas con triunfo para dos a cuatro personas. Se roba una carta después de cada baza, así que la mano se repone sola hasta que se acaba el mazo. Gana quien reúna más puntos en cartas.",
     "sections": [
@@ -70,6 +71,7 @@ export const SAMPLE_GAMES: Game[] = [
   {
     "id": "4a58d480-a6b6-5599-b157-b2979e9cd30a",
     "slug": "chinchon",
+    "textLocale": "es",
     "title": "Chinchón",
     "summary": "Cada jugador roba y descarta buscando grupos de cartas iguales y escaleras del mismo palo. Quien cierra deja a los demás con puntos en la mano, y se juega hasta que alguien se pasa del límite acordado.",
     "sections": [
@@ -130,6 +132,7 @@ export const SAMPLE_GAMES: Game[] = [
   {
     "id": "306d3111-a83e-5e7d-82f6-59508701f8d6",
     "slug": "escoba",
+    "textLocale": "es",
     "title": "Escoba de 15",
     "summary": "Se capturan cartas de la mesa sumando exactamente quince con una de la mano. Limpiar la mesa entera es una escoba y vale un punto. Juego corto, aritmética sencilla y mucha memoria.",
     "sections": [
@@ -192,6 +195,7 @@ export const SAMPLE_GAMES: Game[] = [
   {
     "id": "10f8ec2c-ac87-5a22-962d-3be9b21b9d23",
     "slug": "texas-holdem",
+    "textLocale": "es",
     "title": "Póker Texas hold’em",
     "summary": "La variante de póker más jugada. Cada jugador recibe dos cartas propias y comparte cinco comunitarias; se apuesta en cuatro rondas y gana la mejor mano de cinco cartas, o quien consiga que los demás se retiren.",
     "sections": [
@@ -253,6 +257,7 @@ export const SAMPLE_GAMES: Game[] = [
   {
     "id": "0f24581c-5378-5aad-93ff-b6286de7dcef",
     "slug": "mus",
+    "textLocale": "es",
     "title": "Mus",
     "summary": "El juego de apuestas español por excelencia, en parejas. No gana la mejor mano, gana quien mejor apuesta: se puja cuatro veces por mano y se puede ganar un lance con las peores cartas si el rival no te aguanta. Los compañeros se avisan con señas, y eso es parte del juego.",
     "sections": [
@@ -328,6 +333,7 @@ export const SAMPLE_GAMES: Game[] = [
   {
     "id": "4c905703-bf6b-579f-8652-b99637e9c15d",
     "slug": "tute",
+    "textLocale": "es",
     "title": "Tute",
     "summary": "Se reparte toda la baraja y se juega al arrastre: hay que asistir al palo y matar si puedes. Reunir rey y caballo del mismo palo se canta y da puntos, y juntar los cuatro reyes o los cuatro caballos gana la partida en el acto.",
     "sections": [
@@ -399,6 +405,7 @@ export const SAMPLE_GAMES: Game[] = [
   {
     "id": "affc9a87-8d53-54fa-bb28-7c425f8fce57",
     "slug": "guinote",
+    "textLocale": "es",
     "title": "Guiñote",
     "summary": "Bazas con triunfo en dos fases. Mientras queda mazo puedes echar lo que quieras y robas después de cada baza; cuando se agota, hay que asistir y matar. Con los cantes de veinte y cuarenta se llega a 101 puntos.",
     "sections": [
@@ -470,6 +477,7 @@ export const SAMPLE_GAMES: Game[] = [
   {
     "id": "4b38d44a-dc4a-578f-abf8-8a2312fa316c",
     "slug": "cuarenta",
+    "textLocale": "es",
     "title": "Cuarenta",
     "summary": "Se capturan cartas de la mesa emparejando números o sumándolos, y los puntos van en fichas: tantos de dos y perros de diez. Se juega en parejas y la chica se gana al llegar a cuarenta.",
     "sections": [
@@ -539,6 +547,7 @@ export const SAMPLE_GAMES: Game[] = [
   {
     "id": "1f67a40d-dc16-589d-b94c-5aaa8354e200",
     "slug": "solitario-klondike",
+    "textLocale": "es",
     "title": "Solitario (Klondike)",
     "summary": "El solitario clásico, para jugar solo. Se ordenan las cartas en columnas alternando color y en orden descendente, para ir subiendo cada palo del as al rey. No siempre se puede ganar, y eso es parte del juego.",
     "sections": [

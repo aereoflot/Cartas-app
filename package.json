@@ -11,7 +11,8 @@
     "test:schema": "./supabase/tests/run.sh",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check:remote": "node scripts/check-remote.mjs"
+    "check:remote": "node scripts/check-remote.mjs",
+    "check:i18n": "node scripts/check-i18n.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",

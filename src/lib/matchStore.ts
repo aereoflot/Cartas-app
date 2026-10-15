@@ -12,8 +12,45 @@ const matchKey = (id: string) => `cartas.match.${id}`
 
 const ids = (): string[] => readJson<string[]>(INDEX_KEY, [])
 
+/**
+ * A match as this version expects it, whatever version wrote it.
+ *
+ * Local storage is the one input here that no type checks. A match written
+ * before `updatedAt` existed comes back without it, TypeScript believes the
+ * field is there, and the first thing that reads it gets `undefined` — which
+ * travelled all the way to Postgres as `null value in column "updated_at" of
+ * relation "matches" violates not-null constraint`, and because the push is a
+ * `Promise.all`, took favourites and folders down with it.
+ *
+ * `startedAt` is the honest fallback: a match nobody has touched since it was
+ * played changed when it was played. Falling back to `now()` instead would make
+ * every old match on this phone look newer than the account's copy and win
+ * every conflict.
+ */
+function normalize(raw: Match | null): Match | null {
+  if (raw === null || typeof raw.id !== 'string') return null
+
+  const startedAt = typeof raw.startedAt === 'string' ? raw.startedAt : new Date(0).toISOString()
+  return {
+    ...raw,
+    startedAt,
+    updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : startedAt,
+    // not-null columns with a default in Postgres: an absent key in a bulk
+    // upsert becomes null rather than the default, so none of these may be
+    // missing by the time they are sent
+    deckSlugs: Array.isArray(raw.deckSlugs) ? raw.deckSlugs : [],
+    playerNames: Array.isArray(raw.playerNames) ? raw.playerNames : [],
+    tally: Array.isArray(raw.tally) ? raw.tally : [],
+    notes: typeof raw.notes === 'string' ? raw.notes : '',
+    playerCount:
+      typeof raw.playerCount === 'number' && Number.isFinite(raw.playerCount)
+        ? raw.playerCount
+        : Math.max(1, (Array.isArray(raw.playerNames) ? raw.playerNames.length : 0) || 1),
+  }
+}
+
 export function loadMatch(id: string): Match | null {
-  return readJson<Match | null>(matchKey(id), null)
+  return normalize(readJson<Match | null>(matchKey(id), null))
 }
 
 export function saveMatch(match: Match): void {

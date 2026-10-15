@@ -34,7 +34,7 @@ function readEnv(path) {
 
 function columns(source, name) {
   const match = source.match(new RegExp(`${name}\\s*=\\s*\`([^\`]*)\``))
-  if (match === null) throw new Error(`${name} not found in src/lib/catalogue.ts`)
+  if (match === null) throw new Error(`${name} not found in the source it was read from`)
   return match[1]
 }
 
@@ -46,9 +46,9 @@ if (!url || !key) {
   process.exit(2)
 }
 
-const source = readFileSync('src/lib/catalogue.ts', 'utf8')
-const GAME_COLUMNS = columns(source, 'GAME_COLUMNS')
-const DECK_COLUMNS = columns(source, 'DECK_COLUMNS')
+// read out of the source rather than copied, so this checks what the app sends
+const GAME_COLUMNS = columns(readFileSync('src/lib/gameMap.ts', 'utf8'), 'GAME_COLUMNS')
+const DECK_COLUMNS = columns(readFileSync('src/lib/catalogue.ts', 'utf8'), 'DECK_COLUMNS')
 
 // the anon key: exactly what a visitor who has not signed in can see
 const supabase = createClient(url, key)
@@ -111,6 +111,42 @@ console.log('\ngames')
       JSON.stringify(cuarenta?.decks?.[0]?.cards_removed) === JSON.stringify(['8', '9', '10']),
       'cuarenta strips the 8s, 9s and 10s',
     )
+  }
+}
+
+console.log('\npublished versions (what a reader actually gets)')
+{
+  // The public catalogue reads the frozen snapshots, not the author's rows, so
+  // this is the query that matters for anybody who is not signed in.
+  const { data, error } = await supabase
+    .from('game_versions')
+    .select('game_id, slug, version, approved_at, payload, games(rating_avg, rating_count)')
+    .order('approved_at', { ascending: false })
+
+  if (error) {
+    note(false, 'the published-version query parses', error.message)
+  } else {
+    note(true, 'the published-version query parses')
+    note(data.length === 9, 'nine games on the public shelf', `got ${data.length}`)
+    note(
+      data.every((v) => (v.payload?.texts ?? []).some((t) => t.locale === 'es')),
+      'every snapshot carries its Spanish text',
+    )
+    note(
+      data.every((v) => (v.payload?.decks ?? []).every((d) => d.deck?.slug)),
+      'every snapshot carries the deck it needs',
+    )
+    note(
+      data.every((v) => typeof v.payload?.players_min === 'number'),
+      'every snapshot carries the specification',
+    )
+    note(data.every((v) => v.games !== null), 'the live counters still join on')
+
+    const { data: live } = await supabase.from('games').select('slug').eq('status', 'published')
+    const onShelf = new Set(data.map((v) => v.slug))
+    const missing = (live ?? []).filter((g) => !onShelf.has(g.slug))
+    note(missing.length === 0, 'no published game is missing its snapshot',
+      missing.map((g) => g.slug).join(' '))
   }
 }
 

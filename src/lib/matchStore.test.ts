@@ -84,3 +84,59 @@ describe('tally', () => {
     ])
   })
 })
+
+/*
+ * Local storage is the one input nothing typechecks: whatever an older version
+ * of the app wrote is what comes back. A match written before `updatedAt`
+ * existed reached Postgres as `null value in column "updated_at" of relation
+ * "matches" violates not-null constraint`, and because the push is one
+ * settled batch it reported favourites and folders as unsaved too.
+ */
+describe('una partida escrita por una version vieja de la app', () => {
+  const writeRaw = (id: string, raw: Record<string, unknown>) => {
+    window.localStorage.setItem(`cartas.match.${id}`, JSON.stringify(raw))
+    window.localStorage.setItem('cartas.matches', JSON.stringify([id]))
+  }
+
+  it('se le pone updatedAt a partir de cuando se jugo, no de ahora', () => {
+    writeRaw('old', {
+      id: 'old',
+      gameSlug: 'brisca',
+      playerCount: 2,
+      deckSlugs: ['espanola-40'],
+      playerNames: ['Ana', 'Luis'],
+      notes: 'sin updatedAt, como en la version vieja',
+      tally: [],
+      startedAt: '2025-06-01T20:00:00.000Z',
+    })
+
+    const match = loadMatch('old')
+    // `now()` haria que esta copia ganase todos los conflictos contra la cuenta
+    expect(match?.updatedAt).toBe('2025-06-01T20:00:00.000Z')
+  })
+
+  it('rellena todo lo que en Postgres es not null', () => {
+    writeRaw('bare', { id: 'bare', gameSlug: 'mus', startedAt: '2025-06-01T20:00:00.000Z' })
+
+    const match = loadMatch('bare')
+    expect(match).toMatchObject({
+      deckSlugs: [],
+      playerNames: [],
+      tally: [],
+      notes: '',
+      updatedAt: '2025-06-01T20:00:00.000Z',
+    })
+    expect(match?.playerCount).toBeGreaterThanOrEqual(1)
+  })
+
+  it('una partida sin id no es una partida', () => {
+    writeRaw('broken', { gameSlug: 'mus' })
+    expect(loadMatch('broken')).toBeNull()
+  })
+
+  it('y listMatches no se rompe con ella dentro', () => {
+    writeRaw('old2', { id: 'old2', gameSlug: 'brisca', startedAt: '2025-06-01T20:00:00.000Z' })
+    expect(listMatches()).toHaveLength(1)
+    expect(listMatches()[0]?.updatedAt).toBe('2025-06-01T20:00:00.000Z')
+  })
+})

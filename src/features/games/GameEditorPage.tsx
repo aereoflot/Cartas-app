@@ -3,8 +3,16 @@ import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import type { MissingCardsPolicy } from '@/types/cards'
-import type { DraftProblem, GameDraft } from '@/lib/gameDraft'
-import { emptyDraft, SECTION_TEMPLATE, validateDraft } from '@/lib/gameDraft'
+import type { DraftProblem, GameDraft, Intent } from '@/lib/gameDraft'
+import {
+  ageChoices,
+  draftProblems,
+  emptyDraft,
+  EXTRA_SECTIONS,
+  LIMITS,
+  MAIN_SECTION,
+} from '@/lib/gameDraft'
+import { SaveError } from '@/lib/saveError'
 import { createGame, draftFromGame, updateGame } from '@/lib/gameWrite'
 import { useDecks, useGame } from '@/hooks/useCatalogue'
 import { useSession } from '@/hooks/useSession'
@@ -15,13 +23,17 @@ import { SignInRequired } from '@/components/SignInRequired'
 import { fieldClass } from '@/components/field'
 
 /**
- * Writing a game, one step at a time.
+ * Writing a game, in five questions.
  *
- * The first step is the only one that changes the rest: private or public.
- * Private asks for a title and nothing else — you can park a half-written game
- * and come back — while public has to carry the minimum a reader needs, so each
- * step says what it is still missing instead of a single wall of complaints at
- * the bottom.
+ * It used to be seven steps and some twenty fields, and people abandoned it
+ * halfway — which is the same as it not working. What is left is the name, the
+ * sentence that goes under it, how it is played, what you need on the table,
+ * and anything else worth saying. Nothing asked twice, nothing asked that the
+ * app does not use.
+ *
+ * The first step is still the only one that changes the rest: private or
+ * public. Private asks for the two things the database cannot store a game
+ * without; public asks for what a stranger needs in order to play.
  *
  * Nothing here can publish: an author saves privately or submits for review,
  * and the database refuses any other status from a client.
@@ -68,15 +80,22 @@ export function GameEditorPage() {
 
 /** Which step owns which complaint, so each one can report its own state. */
 const STEP_PROBLEMS: Record<string, DraftProblem[]> = {
-  basics: ['title', 'summary'],
-  players: ['players', 'playersBest', 'teamSize'],
-  decks: ['decks'],
-  details: ['duration'],
-  rules: ['sections'],
+  name: ['title'],
+  brief: ['summary', 'tagline'],
+  description: ['sections'],
+  needs: [
+    'players',
+    'playersBest',
+    'teamSize',
+    'decks',
+    'deckQuantity',
+    'duration',
+    'age',
+    'complexity',
+  ],
+  notes: [],
   send: ['originalWording'],
 }
-
-type Intent = 'private' | 'public'
 
 function EditorForm({
   draft,
@@ -95,7 +114,6 @@ function EditorForm({
 }) {
   const { t } = useTranslation()
   const { data: decks } = useDecks()
-  const problems = validateDraft(draft)
 
   // Public until told otherwise would quietly demand every field of somebody
   // who only wanted a note to themselves, so nothing is assumed: the first step
@@ -106,17 +124,53 @@ function EditorForm({
   const set = <K extends keyof GameDraft>(key: K, value: GameDraft[K]) =>
     onChange({ ...draft, [key]: value })
 
-  const stepState = (name: string): 'done' | 'missing' | 'optional' => {
-    const mine = STEP_PROBLEMS[name] ?? []
-    const unmet = mine.filter((problem) => problems.includes(problem))
-    if (unmet.length === 0) return 'done'
-    // privately, an empty box is a choice rather than an omission
-    return intent === 'private' ? 'optional' : 'missing'
+  // Two lists, because the two buttons answer to different rules: saving
+  // privately needs only what the database demands, submitting needs the rest.
+  const privateBlocking = draftProblems(draft, 'private')
+  const publicBlocking = draftProblems(draft, 'public')
+  const blocking = intent === 'private' ? privateBlocking : publicBlocking
+
+  const sectionBody = (heading: string) =>
+    draft.sections.find((section) => section.heading === heading)?.body.trim() ?? ''
+
+  const setSection = (heading: string, body: string) => {
+    const index = draft.sections.findIndex((section) => section.heading === heading)
+    const next = [...draft.sections]
+    if (index === -1) next.push({ heading, body })
+    else next[index] = { heading, body }
+    set('sections', next)
+  }
+
+  /** What stands in the way of *this* step, so each one explains itself. */
+  const stepProblems = (step: string): DraftProblem[] =>
+    (STEP_PROBLEMS[step] ?? []).filter((problem) => blocking.includes(problem))
+
+  /**
+   * Three honest answers and no fourth. A step with something blocking it says
+   * so; a step with nothing required and nothing written is optional rather
+   * than finished, because calling an empty box "complete" is a small lie that
+   * costs somebody a rejected submission later.
+   */
+  const stepState = (step: string, filled: boolean): 'done' | 'missing' | 'optional' => {
+    if (stepProblems(step).length > 0) return 'missing'
+    return filled ? 'done' : 'optional'
   }
 
   const chooseIntent = (next: Intent) => {
     setIntent(next)
-    setOpen('basics')
+    setOpen('name')
+  }
+
+  /**
+   * A refusal in words. Field problems reuse the form's own wording — the
+   * person is being told the same thing either way — and the rest get their own.
+   */
+  const saveMessage = (error: unknown): string => {
+    if (!(error instanceof SaveError)) return t('editor.saveFailed.unknown')
+    const standalone = ['slugTaken', 'notAllowed', 'signedOut', 'offline', 'unknown']
+    return standalone.includes(error.problem)
+      ? t(`editor.saveFailed.${error.problem}`)
+      : t(`editor.problem.${error.problem}`)
   }
 
   const save = useMutation({
@@ -132,10 +186,9 @@ function EditorForm({
     },
   })
 
-  const sectionsLeft = SECTION_TEMPLATE.filter(
-    (heading) =>
-      draft.sections.find((section) => section.heading === heading)?.body.trim() === '',
-  )
+  const chosenDecks = draft.decks.filter((deck) => deck.deckSlug !== '')
+  const deckName = (deckSlug: string) =>
+    (decks ?? []).find((deck) => deck.slug === deckSlug)?.name ?? deckSlug
 
   return (
     <div className="space-y-4 px-4 py-4">
@@ -153,6 +206,7 @@ function EditorForm({
           title={t('editor.stepVisibility')}
           state={intent === null ? 'missing' : 'done'}
           summary={intent === null ? '' : t(`editor.${intent}Option`)}
+          problems={[]}
           open={open}
           onOpen={setOpen}
         >
@@ -178,39 +232,21 @@ function EditorForm({
 
         <Step
           n={2}
-          name="basics"
-          title={t('editor.stepBasics')}
-          state={stepState('basics')}
+          name="name"
+          title={t('editor.stepName')}
+          state={stepState('name', draft.title.trim() !== '')}
           summary={draft.title.trim()}
+          problems={stepProblems('name')}
           open={open}
           onOpen={setOpen}
           locked={intent === null}
-          onNext={() => setOpen('players')}
+          onNext={() => setOpen('brief')}
         >
-          <Field label={t('editor.gameTitle')}>
+          <Field label={t('editor.gameTitle')} hint={t('editor.gameTitleHint')}>
             <input
               value={draft.title}
               onChange={(event) => set('title', event.target.value)}
-              maxLength={120}
-              className={fieldClass}
-            />
-          </Field>
-
-          <Field label={t('editor.tagline')} hint={t('editor.taglineHint')}>
-            <input
-              value={draft.tagline}
-              onChange={(event) => set('tagline', event.target.value)}
-              maxLength={160}
-              className={fieldClass}
-            />
-          </Field>
-
-          <Field label={t('editor.summary')} hint={t('editor.summaryHint')}>
-            <textarea
-              value={draft.summary}
-              onChange={(event) => set('summary', event.target.value)}
-              rows={3}
-              maxLength={600}
+              maxLength={LIMITS.title.max}
               className={fieldClass}
             />
           </Field>
@@ -218,38 +254,121 @@ function EditorForm({
 
         <Step
           n={3}
-          name="players"
-          title={t('editor.stepPlayers')}
-          state={stepState('players')}
-          summary={`${draft.playersMin}–${draft.playersMax}`}
+          name="brief"
+          title={t('editor.stepBrief')}
+          state={stepState('brief', draft.summary.trim() !== '')}
+          summary={draft.summary.trim()}
+          problems={stepProblems('brief')}
           open={open}
           onOpen={setOpen}
           locked={intent === null}
-          onNext={() => setOpen('decks')}
+          onNext={() => setOpen('description')}
         >
-          <div className="grid grid-cols-3 gap-2">
-            <NumberField
-              label={t('editor.playersMin')}
-              value={draft.playersMin}
-              min={1}
-              max={64}
-              onChange={(value) => set('playersMin', value ?? 1)}
+          <Field label={t('editor.summary')} hint={t('editor.summaryHint')}>
+            <textarea
+              value={draft.summary}
+              onChange={(event) => set('summary', event.target.value)}
+              rows={3}
+              maxLength={LIMITS.summary.max}
+              className={fieldClass}
             />
-            <NumberField
-              label={t('editor.playersMax')}
-              value={draft.playersMax}
-              min={1}
-              max={64}
-              onChange={(value) => set('playersMax', value ?? 1)}
+          </Field>
+          <Counter length={draft.summary.trim().length} min={LIMITS.summary.min} />
+        </Step>
+
+        <Step
+          n={4}
+          name="description"
+          title={t('editor.stepDescription')}
+          state={stepState('description', sectionBody(MAIN_SECTION) !== '')}
+          summary={sectionBody(MAIN_SECTION)}
+          problems={stepProblems('description')}
+          open={open}
+          onOpen={setOpen}
+          locked={intent === null}
+          onNext={() => setOpen('needs')}
+        >
+          <Field label={t('editor.howToPlay')} hint={t('editor.howToPlayHint')}>
+            <textarea
+              value={draft.sections.find((s) => s.heading === MAIN_SECTION)?.body ?? ''}
+              onChange={(event) => setSection(MAIN_SECTION, event.target.value)}
+              rows={8}
+              className={fieldClass}
             />
-            <NumberField
-              label={t('editor.playersBest')}
-              value={draft.playersBest}
-              min={1}
-              max={64}
-              onChange={(value) => set('playersBest', value)}
-            />
+          </Field>
+
+          {/* Everything a thorough author might want, folded away, so the
+              casual one never has to scroll past it. */}
+          <div className="rounded-card border border-line px-3">
+            <Collapsible
+              title={t('editor.extraSections')}
+              summary={
+                EXTRA_SECTIONS.filter((heading) => sectionBody(heading) !== '').length === 0
+                  ? ''
+                  : String(EXTRA_SECTIONS.filter((heading) => sectionBody(heading) !== '').length)
+              }
+            >
+              <p className="mb-2 text-xs text-muted">{t('editor.extraSectionsHint')}</p>
+              <div className="space-y-2">
+                {EXTRA_SECTIONS.map((heading) => (
+                  <Field key={heading} label={heading}>
+                    <textarea
+                      value={draft.sections.find((s) => s.heading === heading)?.body ?? ''}
+                      onChange={(event) => setSection(heading, event.target.value)}
+                      rows={3}
+                      aria-label={heading}
+                      className={fieldClass}
+                    />
+                  </Field>
+                ))}
+              </div>
+            </Collapsible>
           </div>
+        </Step>
+
+        <Step
+          n={5}
+          name="needs"
+          title={t('editor.stepNeeds')}
+          state={stepState('needs', chosenDecks.length > 0)}
+          summary={
+            chosenDecks.length === 0
+              ? ''
+              : `${draft.playersMin}–${draft.playersMax} · ${deckName(chosenDecks[0]!.deckSlug)}`
+          }
+          problems={stepProblems('needs')}
+          open={open}
+          onOpen={setOpen}
+          locked={intent === null}
+          onNext={() => setOpen('notes')}
+        >
+          <p className="text-xs text-muted">{t('editor.needsHint')}</p>
+
+          <Field label={t('editor.players')}>
+            <div className="grid grid-cols-3 gap-2">
+              <NumberField
+                label={t('editor.playersMin')}
+                value={draft.playersMin}
+                min={LIMITS.players.min}
+                max={LIMITS.players.max}
+                onChange={(value) => set('playersMin', value ?? 1)}
+              />
+              <NumberField
+                label={t('editor.playersMax')}
+                value={draft.playersMax}
+                min={LIMITS.players.min}
+                max={LIMITS.players.max}
+                onChange={(value) => set('playersMax', value ?? 1)}
+              />
+              <NumberField
+                label={t('editor.playersBest')}
+                value={draft.playersBest}
+                min={LIMITS.players.min}
+                max={LIMITS.players.max}
+                onChange={(value) => set('playersBest', value)}
+              />
+            </div>
+          </Field>
 
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -264,24 +383,12 @@ function EditorForm({
             <NumberField
               label={t('editor.teamSize')}
               value={draft.teamSize}
-              min={2}
-              max={8}
+              min={LIMITS.team.min}
+              max={LIMITS.team.max}
               onChange={(value) => set('teamSize', value)}
             />
           )}
-        </Step>
 
-        <Step
-          n={4}
-          name="decks"
-          title={t('editor.stepDecks')}
-          state={stepState('decks')}
-          summary={String(draft.decks.filter((deck) => deck.deckSlug !== '').length)}
-          open={open}
-          onOpen={setOpen}
-          locked={intent === null}
-          onNext={() => setOpen('details')}
-        >
           <Field label={t('editor.decks')} hint={t('editor.decksHint')}>
             <div className="space-y-2">
               {draft.decks.map((requirement, index) => (
@@ -305,8 +412,8 @@ function EditorForm({
                   </select>
                   <input
                     type="number"
-                    min={1}
-                    max={20}
+                    min={LIMITS.deckQuantity.min}
+                    max={LIMITS.deckQuantity.max}
                     value={requirement.quantity}
                     onChange={(event) => {
                       const next = [...draft.decks]
@@ -340,6 +447,61 @@ function EditorForm({
             </div>
           </Field>
 
+          <Field label={t('editor.duration')} hint={t('editor.durationHint')}>
+            <div className="grid grid-cols-2 gap-2">
+              <NumberField
+                label={t('editor.durationMin')}
+                value={draft.durationMin}
+                min={LIMITS.duration.min}
+                max={LIMITS.duration.max}
+                onChange={(value) => set('durationMin', value)}
+              />
+              <NumberField
+                label={t('editor.durationMax')}
+                value={draft.durationMax}
+                min={LIMITS.duration.min}
+                max={LIMITS.duration.max}
+                onChange={(value) => set('durationMax', value)}
+              />
+            </div>
+          </Field>
+
+          <Field label={t('editor.complexity')} hint={t('editor.complexityHint')}>
+            <div className="flex flex-wrap gap-1.5">
+              {[1, 2, 3, 4, 5].map((level) => (
+                <FilterChip
+                  key={level}
+                  on={draft.complexity === level}
+                  onClick={() => set('complexity', draft.complexity === level ? null : level)}
+                >
+                  {level}
+                </FilterChip>
+              ))}
+            </div>
+          </Field>
+
+          <Field label={t('editor.ageMin')} hint={t('editor.ageHint')}>
+            <div className="flex flex-wrap gap-1.5">
+              {ageChoices(draft.ageMin).map((age) => (
+                <FilterChip
+                  key={age ?? 'any'}
+                  on={draft.ageMin === age}
+                  onClick={() => set('ageMin', age)}
+                >
+                  {age === null ? t('editor.ageAny') : `${age}+`}
+                </FilterChip>
+              ))}
+            </div>
+          </Field>
+
+          <Field label={t('editor.extras')} hint={t('editor.listHint')}>
+            <input
+              value={draft.requiresExtras.join(', ')}
+              onChange={(event) => set('requiresExtras', splitList(event.target.value))}
+              className={fieldClass}
+            />
+          </Field>
+
           <Field label={t('game.missing.label')} hint={t('editor.missingHint')}>
             <div className="flex flex-wrap gap-1.5">
               {(['strict', 'tolerant', 'irrelevant'] as MissingCardsPolicy[]).map((policy) => (
@@ -363,147 +525,67 @@ function EditorForm({
         </Step>
 
         <Step
-          n={5}
-          name="details"
-          title={t('editor.stepDetails')}
-          state="optional"
-          summary=""
-          open={open}
-          onOpen={setOpen}
-          locked={intent === null}
-          onNext={() => setOpen('rules')}
-        >
-          <div className="grid grid-cols-2 gap-2">
-            <NumberField
-              label={t('editor.durationMin')}
-              value={draft.durationMin}
-              min={1}
-              max={1440}
-              onChange={(value) => set('durationMin', value)}
-            />
-            <NumberField
-              label={t('editor.durationMax')}
-              value={draft.durationMax}
-              min={1}
-              max={1440}
-              onChange={(value) => set('durationMax', value)}
-            />
-          </div>
-
-          <Field label={t('search.complexity')}>
-            <div className="flex flex-wrap gap-1.5">
-              {[1, 2, 3, 4, 5].map((level) => (
-                <FilterChip
-                  key={level}
-                  on={draft.complexity === level}
-                  onClick={() => set('complexity', draft.complexity === level ? null : level)}
-                >
-                  {level}
-                </FilterChip>
-              ))}
-            </div>
-          </Field>
-
-          <NumberField
-            label={t('editor.ageMin')}
-            value={draft.ageMin}
-            min={3}
-            max={21}
-            onChange={(value) => set('ageMin', value)}
-          />
-
-          <Field label={t('editor.extras')} hint={t('editor.listHint')}>
-            <input
-              value={draft.requiresExtras.join(', ')}
-              onChange={(event) => set('requiresExtras', splitList(event.target.value))}
-              className={fieldClass}
-            />
-          </Field>
-
-          <Field label={t('editor.mechanics')} hint={t('editor.listHint')}>
-            <input
-              value={draft.mechanics.join(', ')}
-              onChange={(event) => set('mechanics', splitList(event.target.value))}
-              className={fieldClass}
-            />
-          </Field>
-        </Step>
-
-        <Step
           n={6}
-          name="rules"
-          title={t('editor.stepRules')}
-          state={stepState('rules')}
-          summary={`${draft.sections.filter((s) => s.body.trim() !== '').length}`}
+          name="notes"
+          title={t('editor.stepNotes')}
+          state={stepState('notes', sectionBody('Notas') !== '')}
+          summary={sectionBody('Notas')}
+          problems={[]}
           open={open}
           onOpen={setOpen}
           locked={intent === null}
           onNext={() => setOpen('send')}
         >
-          <p className="mb-2 text-xs text-muted">{t('editor.rulesHint')}</p>
-          <div className="rounded-card border border-line">
-            {draft.sections.map((section, index) => {
-              const required = ['Objetivo', 'Preparación', 'Desarrollo'].includes(section.heading)
-              return (
-                <Collapsible
-                  key={section.heading}
-                  title={`${section.heading}${required ? ' *' : ''}`}
-                  summary={section.body.trim() === '' ? '' : '✓'}
-                  defaultOpen={required && section.body.trim() === ''}
-                >
-                  <textarea
-                    value={section.body}
-                    onChange={(event) => {
-                      const next = [...draft.sections]
-                      next[index] = { ...section, body: event.target.value }
-                      set('sections', next)
-                    }}
-                    rows={5}
-                    aria-label={section.heading}
-                    className={fieldClass}
-                  />
-                </Collapsible>
-              )
-            })}
-          </div>
-          {sectionsLeft.length > 0 && (
-            <p className="mt-2 text-xs text-muted">
-              {t('editor.sectionsLeft', { list: sectionsLeft.join(', ') })}
-            </p>
-          )}
+          <Field label={t('editor.notes')} hint={t('editor.notesHint')}>
+            <textarea
+              value={draft.sections.find((s) => s.heading === 'Notas')?.body ?? ''}
+              onChange={(event) => setSection('Notas', event.target.value)}
+              rows={4}
+              className={fieldClass}
+            />
+          </Field>
         </Step>
 
         <Step
           n={7}
           name="send"
           title={intent === 'private' ? t('editor.stepSave') : t('editor.stepSend')}
-          state={stepState('send')}
+          state={stepState('send', intent !== 'public' || draft.originalWording)}
           summary=""
+          // this step lists everything that is blocking, below, so the per-step
+          // box would say the same thing twice on the same screen
+          problems={[]}
           open={open}
           onOpen={setOpen}
           locked={intent === null}
         >
           <div className="space-y-3">
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={draft.originalWording}
-                onChange={(event) => set('originalWording', event.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0"
-              />
-              <span>{t('editor.originalWording')}</span>
-            </label>
-            <p className="text-xs text-muted">{t('editor.copyrightNote')}</p>
+            {/* The attestations are the price of publishing, so they are asked
+                only of somebody who is publishing. */}
+            {intent === 'public' && (
+              <>
+                <label className="flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={draft.originalWording}
+                    onChange={(event) => set('originalWording', event.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0"
+                  />
+                  <span>{t('editor.originalWording')}</span>
+                </label>
+                <p className="text-xs text-muted">{t('editor.copyrightNote')}</p>
 
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={draft.adultOnly}
-                onChange={(event) => set('adultOnly', event.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0"
-              />
-              <span>{t('editor.adultOnly')}</span>
-            </label>
+                <label className="flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={draft.adultOnly}
+                    onChange={(event) => set('adultOnly', event.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0"
+                  />
+                  <span>{t('editor.adultOnly')}</span>
+                </label>
+              </>
+            )}
 
             {warnRepublish && (
               <p className="rounded-card border border-warn/40 px-4 py-3 text-sm text-warn">
@@ -515,9 +597,9 @@ function EditorForm({
               {intent === 'private' ? t('editor.privateNote') : t('editor.publicNote')}
             </p>
 
-            {intent === 'public' && problems.length > 0 && (
+            {blocking.length > 0 && (
               <ul className="space-y-1 rounded-card border border-dashed border-line px-4 py-3 text-sm text-muted">
-                {problems.map((problem: DraftProblem) => (
+                {blocking.map((problem: DraftProblem) => (
                   <li key={problem}>· {t(`editor.problem.${problem}`)}</li>
                 ))}
               </ul>
@@ -527,41 +609,54 @@ function EditorForm({
               <div className="flex gap-2">
                 <button
                   type="button"
-                  disabled={draft.title.trim() === '' || save.isPending}
+                  disabled={privateBlocking.length > 0 || save.isPending}
                   onClick={() => save.mutate('draft')}
                   className="flex-1 rounded-full border border-line px-4 py-3 font-medium disabled:opacity-50"
                 >
-                  {t('editor.savePrivate')}
+                  {t('editor.saveDraft')}
                 </button>
                 <button
                   type="button"
-                  disabled={problems.length > 0 || save.isPending}
+                  disabled={publicBlocking.length > 0 || save.isPending}
                   onClick={() => save.mutate('pending_review')}
                   className="flex-1 rounded-full bg-accent px-4 py-3 font-semibold text-accent-ink disabled:opacity-50"
                 >
-                  {t('editor.submit')}
+                  {save.isPending ? t('editor.saving') : t('editor.submit')}
                 </button>
               </div>
             ) : (
               <button
                 type="button"
-                disabled={draft.title.trim() === '' || save.isPending}
+                disabled={privateBlocking.length > 0 || save.isPending}
                 onClick={() => save.mutate('draft')}
                 className="w-full rounded-full bg-accent px-4 py-3 font-semibold text-accent-ink disabled:opacity-50"
               >
-                {t('editor.savePrivate')}
+                {save.isPending ? t('editor.saving') : t('editor.savePrivate')}
               </button>
             )}
 
             {save.isSuccess && <p className="text-sm text-accent">{t('editor.saved')}</p>}
             {save.error !== null && (
-              <p role="alert" className="text-sm text-danger">
-                {save.error instanceof Error ? save.error.message : String(save.error)}
-              </p>
+              <div role="alert" className="rounded-card border border-danger/40 px-4 py-3">
+                <p className="text-sm font-medium text-danger">{saveMessage(save.error)}</p>
+                {/* the database's own words, folded away: useless to almost
+                    everybody, and the only thing worth having when it is
+                    something nobody anticipated */}
+                <details className="mt-1">
+                  <summary className="cursor-pointer text-xs text-muted">
+                    {t('editor.technicalDetail')}
+                  </summary>
+                  <p className="mt-1 break-words text-xs text-muted">
+                    {save.error instanceof Error ? save.error.message : String(save.error)}
+                  </p>
+                </details>
+              </div>
             )}
           </div>
         </Step>
       </div>
+
+      <p className="px-1 text-xs leading-relaxed text-muted">{t('editor.twoWays')}</p>
     </div>
   )
 }
@@ -572,6 +667,11 @@ function EditorForm({
  * decisions rather than a page that never ends — and the state on the right
  * means you can see what is left without opening anything.
  *
+ * The state is spelled out — complete, missing something, optional — because a
+ * coloured tick is only legible to somebody who already knows the convention.
+ * When something is missing, the step says which thing, in the same words the
+ * save button would use.
+ *
  * `locked` holds the later steps shut until the first one is answered, because
  * what those steps require depends on that answer.
  */
@@ -581,6 +681,7 @@ function Step({
   title,
   state,
   summary,
+  problems,
   open,
   onOpen,
   locked = false,
@@ -592,6 +693,7 @@ function Step({
   title: string
   state: 'done' | 'missing' | 'optional'
   summary: string
+  problems: DraftProblem[]
   open: string
   onOpen: (name: string) => void
   locked?: boolean
@@ -608,6 +710,7 @@ function Step({
       : state === 'optional'
         ? 'bg-surface-2 text-muted'
         : 'bg-warn/15 text-warn'
+  const stateTone = state === 'missing' ? 'text-warn' : 'text-muted'
 
   return (
     <div className="border-b border-line last:border-0">
@@ -630,9 +733,7 @@ function Step({
             <span className="block truncate text-xs text-muted">{summary}</span>
           )}
         </span>
-        <span className="shrink-0 text-xs text-muted">
-          {state === 'missing' && !isOpen ? t('editor.stepMissing') : ''}
-        </span>
+        <span className={`shrink-0 text-xs ${stateTone}`}>{t(`editor.state.${state}`)}</span>
         <span className="shrink-0 text-muted" aria-hidden="true">
           {isOpen ? '−' : '+'}
         </span>
@@ -640,6 +741,13 @@ function Step({
 
       {isOpen && (
         <div className="space-y-3 px-4 pb-4">
+          {problems.length > 0 && (
+            <ul className="space-y-1 rounded-card border border-dashed border-warn/50 px-3 py-2 text-xs text-warn">
+              {problems.map((problem) => (
+                <li key={problem}>· {t(`editor.problem.${problem}`)}</li>
+              ))}
+            </ul>
+          )}
           {children}
           {onNext !== undefined && (
             <button
@@ -658,6 +766,15 @@ function Step({
 
 const splitList = (raw: string): string[] =>
   raw.split(',').map((item) => item.trim()).filter((item) => item !== '')
+
+/** How much is written, when there is a minimum worth counting towards. */
+function Counter({ length, min }: { length: number; min: number }) {
+  const { t } = useTranslation()
+  if (length >= min) return null
+  return (
+    <p className="text-xs text-muted">{t('editor.charactersLeft', { n: min - length })}</p>
+  )
+}
 
 function Field({
   label,
@@ -702,6 +819,13 @@ function NumberField({
         onChange={(event) =>
           onChange(event.target.value === '' ? null : Number(event.target.value))
         }
+        onBlur={() => {
+          // Clamping as you type fights the typist ("1" on the way to "12");
+          // clamping on the way out just quietly keeps it legal.
+          if (value === null) return
+          const settled = Math.min(max, Math.max(min, Math.round(value)))
+          if (settled !== value) onChange(settled)
+        }}
         className={fieldClass}
       />
     </label>

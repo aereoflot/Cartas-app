@@ -72,6 +72,12 @@ export interface RulesSection {
 export interface Game {
   id: string
   slug: string
+  /**
+   * The language this game's text is really in. Not the reader's language:
+   * when a game has no text in theirs, they get the one that exists, and the
+   * page has to be able to say so.
+   */
+  textLocale: Locale
   title: string
   tagline?: string
   summary: string

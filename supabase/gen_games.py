@@ -129,6 +129,10 @@ def to_typescript(games: list[dict]) -> str:
         item: dict = {
             "id": game_id(g["slug"]),
             "slug": g["slug"],
+            # these nine are written in Spanish; the page says so to a reader
+            # who has the app in English, instead of handing them Spanish rules
+            # with no explanation
+            "textLocale": "es",
             "title": g["title"],
             "summary": g["summary"],
             "sections": sections_json(g["sections"]),

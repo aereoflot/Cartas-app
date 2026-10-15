@@ -27,7 +27,12 @@
     "sampleData": "Sample data",
     "sampleDataBody": "No Supabase configured, so this is an example catalogue. Copy .env.example to .env.local to connect it.",
     "loading": "Loading…",
-    "loadFailed": "The catalogue could not be loaded."
+    "loadFailed": "The catalogue could not be loaded.",
+    "close": "Close",
+    "language": {
+      "es": "Spanish",
+      "en": "English"
+    }
   },
   "home": {
     "resume": "Resume match",
@@ -84,7 +89,8 @@
     "variants": "Variants",
     "comments": "Comments",
     "adult": "18+",
-    "byAuthor": "by {{name}}"
+    "byAuthor": "by {{name}}",
+    "onlyInLocale": "These rules are written in {{language}} and there is no translation yet. They are shown as they are so you are not missing anything; when there is a version in your language it will appear here."
   },
   "match": {
     "startTitle": "Start a match",
@@ -181,14 +187,8 @@
   },
   "auth": {
     "title": "Sign in",
-    "body": "Type your email and we send you a link. No passwords.",
+    "body": "Sign in with your email and password, or make an account in a minute.",
     "email": "Email",
-    "send": "Send me the link",
-    "sending": "Sending…",
-    "sentTitle": "Check your email",
-    "sentBody": "We sent a link to {{email}}. Open it on this device and you are in.",
-    "useAnother": "Use another email",
-    "noPassword": "No passwords stored: a fresh link every time.",
     "notConfigured": "No database is connected yet, so signing in is not possible. That is the next step.",
     "signIn": "Sign in",
     "signOut": "Sign out",
@@ -203,14 +203,17 @@
     "deleting": "Deleting…",
     "privacy": "Privacy",
     "problem": {
-      "rateLimit": "Too many links asked for in a short time. Wait a few minutes and try again: the previous email still works.",
-      "invalidEmail": "That email does not look valid. Check it and try again.",
-      "offline": "The server could not be reached. It may be your connection, a browser blocker, or the server not answering.",
-      "unknown": "The link could not be sent."
+      "rateLimit": "Too many tries in a row. Wait a while and try again.",
+      "invalidEmail": "That email does not look right. Check the spelling.",
+      "offline": "The server could not be reached. Check your connection and try again.",
+      "wrongLogin": "The email or the password is not right.",
+      "usernameTaken": "There is already an account with that email. Sign in instead.",
+      "weakPassword": "That password is too short or too easy. Pick another.",
+      "unknown": "That did not work. If it happens again, send me the details."
     },
     "bodyPassword": "Sign in with your email and password.",
     "signUpTitle": "Create account",
-    "signUpBody": "Pick a handle, give an email and a password. There is nothing to confirm.",
+    "signUpBody": "Pick a handle, give your email, your date of birth and a password. There is nothing to verify.",
     "signUpAction": "Create account",
     "password": "Password",
     "passwordAgain": "Repeat the password",
@@ -227,8 +230,25 @@
     "haveAccount": "Already have an account? Sign in",
     "noVerification": "We send you nothing and there is nothing to confirm: creating the account signs you in. The email is only for signing in, and for recovering the password the day you need to.",
     "emailShape": "Write the whole address, with an @ and a domain.",
-    "handleNote": "This is how friends see you and find you. It cannot be changed later.",
-    "emailNote": "Your email is not published and does not appear on your profile."
+    "handleNote": "This is how friends see you and find you. You can change it later in your profile.",
+    "emailNote": "Your email is not published and does not appear on your profile.",
+    "birthdate": "Date of birth",
+    "birthdateNote": "Asked once, and only to know whether you can see adult games. It is not published, nobody else sees it, and the day you turn {{adult}} they unlock by themselves.",
+    "birthdate_shape": "That date does not make sense. Use the calendar.",
+    "birthdate_future": "That date is in the future.",
+    "birthdate_tooYoung": "You have to be at least {{min}} to make an account.",
+    "birthdate_tooOld": "That date is too far back. Have another look.",
+    "forgotTitle": "I forgot my password",
+    "forgotBody": "Give your email and we will send a link to set a new one.",
+    "forgotLink": "Forgot your password?",
+    "forgotAction": "Send me the link",
+    "forgotSent": "If that address has an account, the link is on its way. Check the spam folder too.",
+    "forgotWarning": "The link opens in whichever browser your mail app prefers, which may not be this one. If that happens, come back here and sign in with the new password.",
+    "backToSignIn": "Back to signing in with my password",
+    "newPasswordTitle": "Set a new password",
+    "newPasswordBody": "Choose it and that is it. The old one is not needed.",
+    "newPasswordAction": "Save the password",
+    "newPasswordNoLink": "This link is no longer good: it has been used, or it expired, or it opened in another browser. Ask for another from the sign-in screen."
   },
   "friends": {
     "list": "Your friends",
@@ -309,9 +329,6 @@
     "too-short": "Too short: {{min}} characters minimum.",
     "too-long": "Too long: 24 characters maximum.",
     "bad-characters": "Lower case without accents, numbers and underscore only (no ñ, accents or spaces).",
-    "settings": "Settings",
-    "hideAdult": "Hide 18+ games",
-    "hideAdultHint": "Keeps them out of search and lists. Private to you: nobody else can read it.",
     "myGames": "My games",
     "newGame": "Publish one",
     "noGames": "You have not published a game yet. If you play something that is not here, write it up.",
@@ -322,15 +339,34 @@
       "rejected": "rejected",
       "archived": "archived"
     },
-    "usernameFixed": "This is the handle you sign in with, so it does not change. The name people see does.",
     "passwordTitle": "Password",
     "currentPassword": "Current password",
     "newPassword": "New password",
     "changePassword": "Change the password",
-    "passwordChanged": "Password changed."
+    "passwordChanged": "Password changed.",
+    "accountSection": "Account",
+    "playSection": "Matches and friends",
+    "appSection": "The app on your phone",
+    "dataSection": "Privacy and your data",
+    "waitingCount": "{{count}} in review",
+    "emailNote": "This is what you sign in with, and the only way a password can be recovered. It is not published.",
+    "gameStatusNote": {
+      "draft": "Saved for you alone. It is in your searcher and you can play from it.",
+      "pending_review": "I am reviewing it. While it waits it is still yours: it stays in your searcher and you can play from it. There is nothing for you to do.",
+      "published": "Published: anyone can find it and play from it.",
+      "rejected": "It did not go out. The reason is below: fix it and send it again.",
+      "archived": "Archived. It no longer appears in the searcher."
+    },
+    "birthdateNote": "This is what decides whether you see adult games. Asked once, and not changed."
   },
   "sync": {
-    "failed": "Your favourites and folders could not be saved to your account. They are still on this phone; the next change retries."
+    "failedWhat": {
+      "collections": "Your favourites and folders were not saved to your account.",
+      "matches": "Your match history was not saved to your account.",
+      "both": "Nothing could be saved to your account."
+    },
+    "failedBody": "Nothing is lost: it is still on this device and it tries again as soon as you change something. If it does not clear, open the details.",
+    "offline": "No connection. You can carry on as normal — favourites, folders, matches — but changes are not saved to your account until the signal is back. Nothing is lost."
   },
   "review": {
     "title": "Games to review",
@@ -342,20 +378,29 @@
     "reasonLabel": "Reason for rejecting",
     "reasonPlaceholder": "What would have to change for this to be published…",
     "reasonHint": "The author sees this as written, and it is kept on the record. A rejection without a reason is refused.",
-    "confirmReject": "Reject with this reason"
+    "confirmReject": "Reject with this reason",
+    "waiting": "Waiting for review",
+    "reports": "Reports from people",
+    "noReports": "No open reports.",
+    "reportBy": "Reported by @{{name}}",
+    "reportByGone": "Whoever reported it no longer has an account",
+    "reportGameGone": "That game no longer exists",
+    "reportFixed": "Fixed",
+    "reportNothing": "Nothing to fix",
+    "takeDown": "Take the game down",
+    "takeDownPlaceholder": "For example: the text is copied from a website.",
+    "takeDownHint": "It stops being visible to everyone. The author keeps their copy and reads this reason on their profile. It is the only thing that undoes publishing.",
+    "confirmTakeDown": "Take it down",
+    "actionFailed": "That did not work. Try again."
   },
   "editor": {
     "title": "Publish a game",
     "editing": "Edit the game",
-    "intro": "The spec first — it is the quick part, and what makes you findable. Then the rules.",
+    "intro": "Five questions. You can save it half-written and come back another day.",
     "needsAccount": "Sign in with your email to publish a game.",
-    "theSpec": "The spec",
-    "theRules": "The rules",
     "gameTitle": "Game name",
-    "tagline": "One line that sums it up",
-    "taglineHint": "Optional. What reads under the name in the list.",
     "summary": "Summary",
-    "summaryHint": "Two or three sentences: what it is and why it is worth playing.",
+    "summaryHint": "A sentence or two: what it is. This is what shows under the name in the list.",
     "playersMin": "Minimum",
     "playersMax": "Maximum",
     "playersBest": "Best with",
@@ -374,46 +419,76 @@
     "durationMax": "Longest (min)",
     "ageMin": "Minimum age",
     "extras": "What else is needed",
-    "mechanics": "Tags",
     "listHint": "Comma separated.",
-    "rulesHint": "The three with an asterisk are required. The rest, only if they add something.",
-    "sectionsLeft": "Still to write: {{list}}",
     "originalWording": "I wrote these rules myself and did not copy the text from another site or a book.",
     "copyrightNote": "Nobody owns the rules of a game: you may explain mus freely. The text somebody else wrote to explain them is theirs. Write it in your own words.",
     "adultOnly": "This game is for adults (alcohol, money or adult themes).",
-    "republishWarning": "This game is already published. Submitting sends it back to the review queue and it stops being visible until approved again.",
+    "republishWarning": "This game is already published. Submitting sends the changes to the review queue, and the version already approved stays visible meanwhile: nobody loses the game because you are editing it.",
     "saveDraft": "Save draft",
     "submit": "Submit for review",
     "saved": "Saved.",
     "problem": {
-      "title": "Give the game a name.",
-      "summary": "The summary needs at least a sentence (ten characters).",
-      "players": "The player count does not work: the maximum cannot be below the minimum.",
+      "title": "The name has to be between 2 and 120 characters.",
+      "summary": "The summary needs between 10 and 600 characters. One sentence is enough.",
+      "players": "Players run from 1 to 64, and the maximum cannot be below the minimum.",
       "playersBest": "“Best with” has to be between the minimum and the maximum.",
-      "teamSize": "You said it is played in teams: say how many are in each.",
+      "teamSize": "You said it is played in teams: say how many to a team, between 2 and 8.",
       "decks": "Pick the deck the game needs.",
-      "duration": "The longest cannot be below the shortest.",
-      "sections": "Objective, Setup or Play is missing: without those three it cannot be played.",
-      "originalWording": "Tick the box saying the text is yours."
+      "duration": "Duration runs from 1 to 1440 minutes, and the maximum cannot be below the minimum.",
+      "sections": "How it is played is missing: without that nobody can play it.",
+      "originalWording": "Tick the box saying the text is yours.",
+      "tagline": "The one-line summary cannot go over 160 characters.",
+      "age": "The minimum age has to be between 3 and 21. If anyone can play, leave it on “all ages”.",
+      "complexity": "Difficulty runs from 1 to 5.",
+      "deckQuantity": "How many decks of the same kind: between 1 and 20."
     },
-    "twoWays": "Saving privately asks only for the title: leave whatever you like empty and come back another day. Sending it for review asks for the minimums above, and while it is reviewed the game is still yours: it stays in the searcher and you can play from it.",
+    "twoWays": "Saving privately asks only for the name and the short description — the least needed to store it. Submitting also asks how it is played and which deck, and while it is reviewed the game is still yours: it stays in the searcher and you can play from it.",
     "stepVisibility": "For you, or for everyone?",
     "privateOption": "Just for me",
-    "privateOptionBody": "Quick: a name is enough. Leave whatever you like empty and finish it another day. Nobody else sees it.",
+    "privateOptionBody": "Quick: the name and a sentence, and that is it. Leave the rest empty and finish another day. Nobody else sees it.",
     "publicOption": "For everyone",
-    "publicOptionBody": "The minimum has to be filled in for it to make sense. It gets reviewed before it goes out, and you can use it meanwhile.",
-    "stepBasics": "Name and what it is",
-    "stepPlayers": "Players",
-    "stepDecks": "What you play with",
-    "stepDetails": "Details (optional)",
-    "stepRules": "The rules",
+    "publicOptionBody": "It needs the name, the sentence, how it is played and which deck. It gets reviewed before it goes out, and you can use it meanwhile.",
     "stepSave": "Save",
     "stepSend": "Check and send",
-    "stepMissing": "something missing",
     "next": "Next",
     "savePrivate": "Save just for me",
     "privateNote": "Saved for you alone. You will find it in your searcher and your profile, and you can make it public whenever you like.",
-    "publicNote": "Sending it puts it in the review queue. While it waits it is still yours: it stays in your searcher and you can play from it."
+    "publicNote": "Sending it puts it in the review queue. While it waits it is still yours: it stays in your searcher and you can play from it.",
+    "saving": "Saving…",
+    "ageAny": "All ages",
+    "ageHint": "Leave it on “all ages” if there is no recommended one.",
+    "technicalDetail": "Technical details",
+    "saveFailed": {
+      "slugTaken": "There is already a game with almost the same name. Change the name a little and try again.",
+      "notAllowed": "You do not have permission to save this game. If it is someone else’s, make your own copy.",
+      "signedOut": "Your session ended. Sign in again — what you wrote is still here.",
+      "offline": "The server could not be reached. It may be your connection, a browser blocker, or the server not answering.",
+      "unknown": "It could not be saved. If it happens again, open the technical details and send them to me."
+    },
+    "stepName": "Name",
+    "stepBrief": "Short description",
+    "stepDescription": "Description",
+    "stepNeeds": "What do you need?",
+    "stepNotes": "Notes",
+    "gameTitleHint": "Whatever you call it at home. Between 2 and 120 characters.",
+    "howToPlay": "How it is played",
+    "howToPlayHint": "Tell it the way you would tell somebody who has just sat down at the table: what is dealt, what you do on your turn, and who wins.",
+    "extraSections": "Add sections (optional)",
+    "extraSectionsHint": "Only if they add something. Anything left empty does not appear on the game page.",
+    "needsHint": "What has to be on the table before you can play.",
+    "players": "Players",
+    "duration": "Roughly how long",
+    "durationHint": "In minutes. Leave it empty if you do not know.",
+    "complexity": "Difficulty",
+    "complexityHint": "From 1 (learnt in a minute) to 5 (takes practice).",
+    "notes": "Notes",
+    "notesHint": "Optional. House variants, the usual mistakes, where the game comes from — whatever does not belong in the rules.",
+    "charactersLeft": "{{n}} characters to go.",
+    "state": {
+      "done": "complete",
+      "missing": "something missing",
+      "optional": "optional"
+    }
   },
   "ai": {
     "intro": "A card-games expert who explains a game another way, referees with the rules in front of it, or tells you what to play.",
@@ -456,7 +531,10 @@
       "game-not-found": "That game is not published, so there are no rules to read.",
       "question-required": "Write the question.",
       "unknown": "Something went wrong asking. Try again."
-    }
+    },
+    "soonTitle": "We are working on it.",
+    "soonBody": "The expert is written and working underneath, but it is not switched on yet, so it cannot answer you for now. We would rather tell you than leave you a screen that always fails.",
+    "soonMeanwhile": "In the meantime, every game has its full rules on its own page, with a jump list for finding the bit you need in the middle of a game."
   },
   "privacy": {
     "title": "Privacy",
@@ -498,5 +576,25 @@
       "body": "Write to [put your contact email here] and I will answer."
     },
     "updated": "Updated October 2026"
+  },
+  "report": {
+    "open": "Report this game",
+    "title": "Report this game",
+    "about": "About \"{{name}}\". It comes to me and I look at it with the game in front of me.",
+    "reason": "What is wrong?",
+    "reasons": {
+      "wrong-rules": "The rules are wrong or incomplete",
+      "inappropriate": "Inappropriate content",
+      "copyright": "The text is copied from somewhere else",
+      "spam": "It is spam, or not a game",
+      "other": "Something else"
+    },
+    "detail": "Tell me more (optional)",
+    "detailPlaceholder": "For example: in mus, the pairs score the other way round from what it says.",
+    "send": "Send the report",
+    "sending": "Sending…",
+    "sent": "Got it, thank you. I will look and fix it or take it down if need be.",
+    "failed": "It could not be sent. Check your connection and try again.",
+    "needsAccount": "Reporting needs an account, so nobody can file one in somebody else's name."
   }
 }

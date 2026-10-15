@@ -6,20 +6,26 @@ export interface MyProfile {
   displayName: string
   locale: string
   role: 'user' | 'moderator' | 'owner'
-  hideAdult: boolean
 }
 
 /**
  * The signed-in user's own profile row. Created automatically by the
  * handle_new_user trigger the first time they sign in, so this may be queried
  * immediately after the first login.
+ *
+ * It asks for no content preference and no birth date. Those live in
+ * `profile_settings`, which only their owner can read — `profiles` is
+ * world-readable, which is the point of it and the reason nothing personal goes
+ * in it. Asking here for a column that moved is how this query spent a release
+ * failing with `column profiles.hide_adult does not exist`, taking the whole
+ * profile screen down with it.
  */
 export async function fetchMyProfile(userId: string): Promise<MyProfile | null> {
   if (supabase === null) return null
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, username, display_name, locale, role, hide_adult')
+    .select('id, username, display_name, locale, role')
     .eq('id', userId)
     .maybeSingle()
 
@@ -32,7 +38,6 @@ export async function fetchMyProfile(userId: string): Promise<MyProfile | null> 
     display_name: string
     locale: string
     role: MyProfile['role']
-    hide_adult: boolean
   }
   return {
     id: row.id,
@@ -40,7 +45,6 @@ export async function fetchMyProfile(userId: string): Promise<MyProfile | null> 
     displayName: row.display_name,
     locale: row.locale,
     role: row.role,
-    hideAdult: row.hide_adult,
   }
 }
 
@@ -68,4 +72,54 @@ export async function updateMyProfile(
   // 23514 check_violation: it did not match the shape the database accepts
   if (error.code === '23514') return 'invalid'
   throw new Error(error.message)
+}
+
+/* ------------------------------------------------------- private settings */
+
+export interface MySettings {
+  /** ISO `yyyy-mm-dd`, or null for an account made before it was asked. */
+  birthdate: string | null
+  /** The old 18+ preference. Only consulted when there is no birth date. */
+  hideAdult: boolean
+}
+
+/**
+ * The settings only their owner can see: the birth date the 18+ gate is
+ * computed from, and the preference it replaced.
+ *
+ * A missing row is not an error. `profile_settings` has no trigger behind it,
+ * so an account that has never saved a setting simply has no row, and the
+ * honest answer is "no date, nothing hidden".
+ */
+export async function fetchMySettings(userId: string): Promise<MySettings> {
+  if (supabase === null) return { birthdate: null, hideAdult: false }
+
+  const { data, error } = await supabase
+    .from('profile_settings')
+    .select('birthdate, hide_adult')
+    .eq('profile_id', userId)
+    .maybeSingle()
+
+  if (error !== null) throw new Error(error.message)
+  if (data === null) return { birthdate: null, hideAdult: false }
+
+  const row = data as { birthdate: string | null; hide_adult: boolean }
+  return { birthdate: row.birthdate, hideAdult: row.hide_adult }
+}
+
+/** Write the settings row, creating it the first time. */
+export async function saveMySettings(
+  userId: string,
+  patch: Partial<MySettings>,
+): Promise<void> {
+  if (supabase === null) return
+
+  const row: Record<string, unknown> = { profile_id: userId }
+  if (patch.birthdate !== undefined) row.birthdate = patch.birthdate
+  if (patch.hideAdult !== undefined) row.hide_adult = patch.hideAdult
+
+  const { error } = await supabase
+    .from('profile_settings')
+    .upsert(row, { onConflict: 'profile_id' })
+  if (error !== null) throw new Error(error.message)
 }

@@ -8,7 +8,7 @@ import { FilterChip } from '@/components/FilterChip'
 import { Loading, LoadFailed } from '@/components/QueryState'
 import { SectionTitle } from '@/components/SectionTitle'
 import { useDecks, useGames, useMyUnpublishedGames } from '@/hooks/useCatalogue'
-import { useFavoriteGames, useHideAdult, useOwnedDecks } from '@/hooks/usePrefs'
+import { useFavoriteGames, useHidesAdult, useOwnedDecks } from '@/hooks/usePrefs'
 import { useSession } from '@/hooks/useSession'
 import { favouritesFirst } from '@/lib/prefs'
 import { matchesQuery } from '@/lib/search'
@@ -78,7 +78,7 @@ export function GameSearch({ variant }: { variant: 'home' | 'full' }) {
   const { data: decks } = useDecks()
   const favorites = useFavoriteGames()
   const owned = useOwnedDecks()
-  const hideAdult = useHideAdult()
+  const hideAdult = useHidesAdult()
   const { session } = useSession()
   const mineQuery = useMyUnpublishedGames(session?.user.id)
 

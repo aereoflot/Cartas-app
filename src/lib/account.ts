@@ -95,15 +95,74 @@ export async function signUp(
   username: string,
   email: string,
   password: string,
+  /** ISO `yyyy-mm-dd`. Asked once; the 18+ gate is computed from it. */
+  birthdate: string,
 ): Promise<void> {
   if (supabase === null) throw new SignInError('unknown', 'supabase-not-configured')
 
   const name = normalizeUsername(username)
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: email.trim(),
     password,
-    options: { data: { username: name } },
+    // The date travels with the account itself as well as going to
+    // `profile_settings` below. Creating the account and writing a row are two
+    // requests, and the second can fail; a date in the user's own metadata
+    // cannot end up missing while the account exists, so the 18+ gate always
+    // has something to read.
+    options: { data: { username: name, birthdate } },
   })
+  if (error !== null) fail(error)
+
+  // Signing up signs you in (confirmation is off), so the session needed to
+  // write this row is already here. A failure is not fatal and not silent
+  // either: the gate falls back to the date in the metadata above.
+  if (data.user !== null) {
+    const { error: settingsError } = await supabase
+      .from('profile_settings')
+      .upsert({ profile_id: data.user.id, birthdate }, { onConflict: 'profile_id' })
+    if (settingsError !== null) {
+      console.warn('profile_settings no se pudo escribir al registrarse', settingsError.message)
+    }
+  }
+}
+
+/**
+ * Start a password recovery: an email with a link back into the app.
+ *
+ * This is the one place an email is sent, and the reason the address is asked
+ * for at all. It inherits the problem that killed sign-in by link — the link
+ * opens in whatever browser the mail app prefers, not necessarily the one the
+ * app is installed in — so the screen says so rather than letting somebody
+ * wonder. For something that happens once, in exchange for not losing the
+ * account, that is the right trade.
+ *
+ * It answers the same way whether or not the address has an account. Saying
+ * "no account with that address" would answer "is this person registered
+ * here?" for anybody who asked.
+ */
+export async function requestPasswordReset(email: string): Promise<void> {
+  if (supabase === null) throw new SignInError('unknown', 'supabase-not-configured')
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: `${window.location.origin}/nueva-contrasena`,
+  })
+  if (error !== null) fail(error)
+}
+
+/**
+ * Set a new password on the session the recovery link opened.
+ *
+ * No current password here, unlike `changePassword`: the link out of the
+ * mailbox is the proof, and somebody recovering an account by definition does
+ * not have the old one.
+ */
+export async function setNewPassword(password: string): Promise<void> {
+  if (supabase === null) throw new SignInError('unknown', 'supabase-not-configured')
+
+  const { data } = await supabase.auth.getSession()
+  if (data.session === null) throw new SignInError('wrongLogin', 'no-recovery-session')
+
+  const { error } = await supabase.auth.updateUser({ password })
   if (error !== null) fail(error)
 }
 
