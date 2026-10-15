@@ -43,6 +43,7 @@ npm test                               # 196 app tests (vitest + jsdom)
 npm run test:schema                    # migrations on a throwaway Postgres, 51 assertions
 npm run check:remote                   # the app's real queries against the live project
 npm run check:i18n                     # every key the code asks for, in both languages
+npm run audit:rls                      # tries, from the anon key, to read and write what it may not
 python3 supabase/migrate.py --status   # which migrations are applied
 python3 supabase/migrate.py            # apply the pending ones
 python3 supabase/live_check.py         # write paths, on throwaway accounts it then deletes
@@ -210,6 +211,10 @@ What the database enforces, with tests rather than hope:
   shelf, and they cannot take one off it by hiding or editing their own copy. Asserted both ways.
 - **A birth date is private to its owner.** It drives the 18+ gate and lives in `profile_settings`,
   never in the world-readable `profiles` row — asserted, including that the column is not there.
+- **`npm run audit:rls` attacks the live project from the client.** With the public anon key and a
+  throwaway account, it tries 22 things a visitor or an ordinary user must not be able to do — read
+  a birth date, a draft, a match, a chat; publish a game; write the review log or `game_versions`;
+  make itself owner; file a report as somebody else — and fails the run if any one succeeds.
 - **`profiles.role` is unwritable from a client** — column grants plus a trigger. Otherwise anyone
   could make themselves the owner. Promoting the owner is a SQL script, on purpose.
 - **No email is reachable from the client.** `profiles` has no email column; searching is a
